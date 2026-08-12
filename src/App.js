@@ -4,6 +4,8 @@ import StatusBoard from './components/StatusBoard';
 import MeterExplorer from './components/MeterExplorer';
 import Dashboard from './components/Dashboard';
 import MapView from './components/MapView';
+import NercDashboard from './components/NercDashboard';
+import Settings from './components/Settings';
 import AdminPanel from './components/AdminPanel';
 import Login from './components/Login';
 import Clock from './components/Clock';
@@ -12,11 +14,13 @@ import api, { setUnauthorizedHandler } from './api';
 
 const NAV = [
   ['dashboard', 'Dashboard', '▦'],
-  ['map', 'Feeder Map', '◎'],
+  ['nerc', 'NERC View', '◈'],
+  ['map', 'Eagle Eye', '◎'],
   ['status', 'Feeder Status', '≣'],
   ['explorer', 'Feeder Explorer', '⌕'],
   ['onboard', 'Onboard Meter', '⊕', 'admin'],
   ['admin', 'Administration', '⚙', 'admin'],
+  ['settings', 'Settings', '⚒', 'admin'],
 ];
 
 class App extends React.Component {
@@ -84,6 +88,7 @@ class App extends React.Component {
           <main className="page">
             {error && <div className="error">{error}</div>}
             {tab === 'dashboard' && <Dashboard />}
+            {tab === 'nerc' && <NercDashboard />}
             {tab === 'map' && <MapView />}
             {tab === 'status' && <StatusBoard />}
             {tab === 'explorer' &&
@@ -92,6 +97,7 @@ class App extends React.Component {
             {tab === 'onboard' && session.role === 'admin' &&
               <OnboardMeter onOnboarded={this.loadMeters} />}
             {tab === 'admin' && session.role === 'admin' && <AdminPanel />}
+            {tab === 'settings' && session.role === 'admin' && <Settings />}
           </main>
         </div>
       </div>

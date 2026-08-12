@@ -8,7 +8,8 @@ class OnboardMeter extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      meterId: '', feederName: '', location: '', intervalSeconds: 15, controllerId: '', disco: '', latitude: '', longitude: '', latitude: '', longitude: '',
+      meterId: '', feederName: '', location: '', intervalSeconds: 15, controllerId: '', disco: '', latitude: '', longitude: '',
+      station: '', motherFeeder: '', category: '', state: '', voltageClass: '', nominalVoltage: '', latitude: '', longitude: '',
       user: '', busy: false, result: null, error: null,
     };
     this.handleChange = this.handleChange.bind(this);
@@ -19,7 +20,8 @@ class OnboardMeter extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
-    const { meterId, feederName, location, intervalSeconds, user, controllerId, disco, latitude, longitude } = this.state;
+    const { meterId, feederName, location, intervalSeconds, user, controllerId, disco, latitude, longitude,
+      station, motherFeeder, category, state, voltageClass, nominalVoltage } = this.state;
     this.setState({ busy: true, error: null, result: null });
     api.onboardMeter({
       meterId: meterId.trim(),
@@ -31,6 +33,12 @@ class OnboardMeter extends React.Component {
       disco: disco.trim() || null,
       latitude: latitude.trim() || null,
       longitude: longitude.trim() || null,
+      station: station.trim() || null,
+      motherFeeder: motherFeeder.trim() || null,
+      category: category.trim() || null,
+      state: state.trim() || null,
+      voltageClass: voltageClass.trim() || null,
+      nominalVoltage: nominalVoltage.trim() || null,
     })
       .then((result) => {
         this.setState({ busy: false, result });
@@ -96,6 +104,33 @@ class OnboardMeter extends React.Component {
             <label>Longitude (for the map)
               <input name="longitude" value={s.longitude} onChange={this.handleChange}
                 placeholder="e.g. 7.4530" />
+            </label>
+            <label>Station
+              <input name="station" value={s.station} onChange={this.handleChange} />
+            </label>
+            <label>Mother Feeder / Station
+              <input name="motherFeeder" value={s.motherFeeder} onChange={this.handleChange} />
+            </label>
+            <label>Feeder Category
+              <input name="category" value={s.category} onChange={this.handleChange}
+                list="cat-options" placeholder="Commercial / Industrial / Residential" />
+              <datalist id="cat-options">
+                <option value="Commercial" /><option value="Industrial" /><option value="Residential" />
+              </datalist>
+            </label>
+            <label>State
+              <input name="state" value={s.state} onChange={this.handleChange} placeholder="e.g. FCT" />
+            </label>
+            <label>Voltage Class
+              <input name="voltageClass" value={s.voltageClass} onChange={this.handleChange}
+                list="vc-options" placeholder="11Kv Feeder / 33Kv Feeder" />
+              <datalist id="vc-options">
+                <option value="11Kv Feeder" /><option value="33Kv Feeder" />
+              </datalist>
+            </label>
+            <label>Nominal Voltage (meter units, for compliance band)
+              <input name="nominalVoltage" value={s.nominalVoltage} onChange={this.handleChange}
+                placeholder="e.g. 11 or 415" />
             </label>
             <label>Controller ID (optional)
               <input name="controllerId" value={s.controllerId} onChange={this.handleChange}

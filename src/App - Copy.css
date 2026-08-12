@@ -1,0 +1,121 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; color: #222; }
+.app-header { background: #0b3d61; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 24px; }
+.app-header h1 { font-size: 20px; margin: 0; }
+.tabs { display: flex; gap: 4px; }
+.tabs button { background: transparent; border: none; color: #cfe3f3; padding: 8px 14px; cursor: pointer; border-radius: 6px 6px 0 0; font-size: 14px; }
+.tabs button.active { background: #f4f6f8; color: #0b3d61; font-weight: 600; }
+.page { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+.card { background: #fff; border-radius: 8px; padding: 18px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.card h2 { margin-top: 0; font-size: 17px; color: #0b3d61; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+.controls label { display: flex; flex-direction: column; font-size: 12px; color: #555; gap: 4px; }
+.controls input, .controls select { padding: 7px 9px; border: 1px solid #c8d1da; border-radius: 5px; font-size: 14px; min-width: 140px; }
+.btn { background: #0b6ba8; color: #fff; border: none; padding: 9px 16px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+.btn:disabled { background: #9bb7c9; cursor: not-allowed; }
+.btn.secondary { background: #e4ebf1; color: #0b3d61; }
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th, table.data td { border-bottom: 1px solid #e4e9ee; padding: 6px 8px; text-align: right; white-space: nowrap; }
+table.data th { background: #eef3f7; color: #33475b; position: sticky; top: 0; }
+table.data td:first-child, table.data th:first-child { text-align: left; }
+.table-wrap { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.badge.online { background: #d9f2e0; color: #157347; }
+.badge.offline { background: #fde2e1; color: #b02a37; }
+.badge.never_reported { background: #eee; color: #666; }
+.badge.auto_registered { background: #fff3cd; color: #8a6d0b; }
+.badge.active { background: #d9f2e0; color: #157347; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.stat { background: #f2f6f9; border-radius: 8px; padding: 14px; }
+.stat .v { font-size: 22px; font-weight: 700; color: #0b3d61; }
+.stat .l { font-size: 12px; color: #557; margin-top: 3px; }
+.error { background: #fde2e1; color: #b02a37; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
+.pager { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-size: 14px; }
+.muted { color: #778; font-size: 13px; }
+.dar-bar { background: #e4ebf1; border-radius: 4px; height: 14px; width: 140px; display: inline-block; vertical-align: middle; }
+.dar-bar > div { height: 100%; border-radius: 4px; background: #2f9e44; }
+.dar-bar > div.warn { background: #e8a80c; }
+.dar-bar > div.bad { background: #d64545; }
+/* status board: force horizontal scroll so all electrical columns are visible */
+.table-wrap table.data.wide { min-width: 1650px; }
+
+/* ---- Protogy Global Services branding ---- */
+.app-header { background: #ffffff; color: #0b3d61; border-bottom: 3px solid #7ec8e3; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.brand-logo { height: 44px; }
+.tabs button { color: #55707f; }
+.tabs button.active { background: #eaf5fb; color: #0b3d61; border-bottom: 3px solid #e8452c; margin-bottom: -3px; }
+.header-clock { margin-left: auto; text-align: right; line-height: 1.15; }
+.clock-time { font-size: 18px; font-weight: 700; color: #0b3d61; font-variant-numeric: tabular-nums; }
+.clock-date { font-size: 11px; color: #667; }
+.app-header > div[style] { margin-left: 16px !important; }  /* user chip sits after clock */
+
+/* ---- Real-time status board ---- */
+@keyframes rowFlash { from { background: #e2f3ff; } to { background: transparent; } }
+tr.row-live td { animation: rowFlash 1.2s ease-out; }
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+  background: #2f9e44; margin-left: 6px; vertical-align: middle;
+  box-shadow: 0 0 0 0 rgba(47,158,68,.5); animation: livePulse 2s infinite; }
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(47,158,68,.45); }
+  70% { box-shadow: 0 0 0 7px rgba(47,158,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(47,158,68,0); }
+}
+
+/* ================= CUSTOMER PORTAL (prepaid) ================= */
+
+/* The four tabs: My Meter / Usage / Buy Credit / History */
+.cust-tabs {
+  display: flex;
+  background: #ffffff;
+  border-bottom: 1px solid #dde5ec;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.cust-tabs button {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 13px 4px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #55707f;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+.cust-tabs button.active {
+  color: #0b3d61;
+  font-weight: 700;
+  border-bottom-color: #e8452c;
+  background: #eaf5fb;
+}
+.cust-tabs button:hover { color: #0b3d61; }
+
+/* Page container: narrow, centered, phone-first */
+.cust-page { max-width: 640px; margin: 0 auto; padding: 14px 12px; }
+
+/* Login / registration card */
+.cust-login { max-width: 400px; margin: 40px auto; }
+.cust-login .controls label { width: 100%; }
+.cust-login .controls input { width: 100%; font-size: 16px; }
+.cust-login .btn { width: 100%; padding: 12px; font-size: 15px; }
+
+/* Vend token display (20-digit credit token) */
+.vend-token {
+  font-family: Consolas, 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: #0b3d61;
+  word-break: break-all;
+}
+
+/* Phone-size tweaks for the portal */
+@media (max-width: 480px) {
+  .cust-tabs button { font-size: 12.5px; padding: 12px 2px; }
+  .cust-page { padding: 10px 8px; }
+  .cust-page .stat-grid { grid-template-columns: 1fr; }
+  .cust-page .stat .v { font-size: 22px; }
+}

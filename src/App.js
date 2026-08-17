@@ -15,7 +15,8 @@ import api, { setUnauthorizedHandler } from './api';
 const NAV = [
   ['dashboard', 'Dashboard', '▦'],
   ['nerc', 'NERC View', '◈'],
-  ['map', 'Eagle Eye', '◎'],
+  // Eagle Eye (feeder map) hidden per NERC feedback — uncomment to restore:
+  // ['map', 'Eagle Eye', '◎'],
   ['status', 'Feeder Status', '≣'],
   ['explorer', 'Feeder Explorer', '⌕'],
   ['onboard', 'Onboard Meter', '⊕', 'admin'],
@@ -26,7 +27,7 @@ const NAV = [
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { session: api.session(), tab: 'dashboard', meters: [], error: null };
+    this.state = { session: api.session(), tab: 'dashboard', meters: [], error: null, navCollapsed: false };
     this.loadMeters = this.loadMeters.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
@@ -59,7 +60,7 @@ class App extends React.Component {
     const items = NAV.filter(([, , , role]) => !role || session.role === 'admin');
 
     return (
-      <div className="shell">
+      <div className={"shell" + (this.state.navCollapsed ? " nav-collapsed" : "")}>
         <aside className="sidebar">
           <div className="side-brand">
             <img alt="Protogy" src="/logo.png"
@@ -68,7 +69,11 @@ class App extends React.Component {
           <nav className="side-nav">
             {items.map(([key, label, icon]) => (
               <button key={key} className={tab === key ? 'active' : ''}
-                onClick={() => this.setState({ tab: key })}>
+                onClick={() => this.setState({
+                  tab: key,
+                  // NERC item 6: auto-collapse the sidebar on Feeder Status
+                  navCollapsed: key === 'status' ? true : this.state.navCollapsed,
+                })}>
                 <span className="ico">{icon}</span>{label}
               </button>
             ))}
@@ -82,6 +87,8 @@ class App extends React.Component {
 
         <div className="main">
           <header className="topbar">
+            <button className="nav-toggle" title="Show / hide menu"
+              onClick={() => this.setState({ navCollapsed: !this.state.navCollapsed })}>☰</button>
             <h1>{(items.find(([k]) => k === tab) || [,''])[1]}</h1>
             <Clock />
           </header>

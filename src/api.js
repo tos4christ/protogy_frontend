@@ -48,6 +48,7 @@ const api = {
   health: () => j('/health'),
   nercSummary: (disco) => j('/nerc/summary' + (disco && disco !== 'all' ? `?disco=${encodeURIComponent(disco)}` : '')),
   nercTable: (date) => j(`/nerc/summary-table${date ? `?date=${date}` : ''}`),
+  nercCompliance: (date) => j(`/nerc/compliance${date ? `?date=${date}` : ''}`),
   nercReportUrl: (name, qs) => `${BASE}/nerc/report/${name}?${qs}&token=${encodeURIComponent(token())}`,
   getSettings: () => j('/settings'),
   saveSettings: (body) => j('/settings', {

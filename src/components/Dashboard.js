@@ -1,13 +1,15 @@
 import React from 'react';
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
-  CartesianGrid, Cell, PieChart, Pie, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell, LabelList,
+  ResponsiveContainer, PieChart, Pie, Legend,
 } from 'recharts';
 import api from '../api';
 
 const darColor = (pct) => (pct >= 95 ? '#2f9e44' : pct >= 80 ? '#e8a80c' : '#d64545');
+const n1 = (v, dp = 1) => (v == null ? '—' : Number(v).toFixed(dp));
 
-// Fleet dashboard: stat cards, today's DAR per feeder, online/offline donut.
+// Landing page: fleet stats, live power/frequency summary table (NERC item 3),
+// always-labelled scrollable D.A.R chart (NERC item 5), connectivity donut.
 class Dashboard extends React.Component {
   constructor(props) {
     super(props);
@@ -20,7 +22,6 @@ class Dashboard extends React.Component {
     this.load();
     this.timer = setInterval(() => { if (!document.hidden) this.load(); }, 60000);
   }
-
   componentWillUnmount() { clearInterval(this.timer); }
 
   load() {
@@ -30,15 +31,16 @@ class Dashboard extends React.Component {
   }
 
   render() {
-    const { data, error } = this.state;
+    const { data, error, disco, discos } = this.state;
     if (error) return <div className="error">{error}</div>;
     if (!data) return <div className="card">Loading dashboard…</div>;
     const t = data.totals;
     const chartData = data.feeders.map((f) => ({
-      name: f.feeder_name || f.meter_id,
-      dar: +f.dar_today,
-      connectivity: f.connectivity,
+      name: f.feeder_name || f.meter_id, dar: +f.dar_today,
     }));
+    // NERC item 5: fixed width per bar so the chart scrolls instead of squeezing
+    const BAR_W = 64;
+    const chartWidth = Math.max(chartData.length * BAR_W, 880);
     const pieData = [
       { name: 'Online', value: t.online, fill: '#2f9e44' },
       { name: 'Offline', value: t.offline, fill: '#d64545' },
@@ -48,13 +50,13 @@ class Dashboard extends React.Component {
     return (
       <React.Fragment>
         <div className="card">
-          <h2>Fleet Overview {this.state.disco !== 'all' && <span className="muted">— {this.state.disco}</span>}</h2>
+          <h2>Fleet Overview {disco !== 'all' && <span className="muted">— {disco}</span>}</h2>
           <div className="controls">
             <label>Disco
-              <select value={this.state.disco}
+              <select value={disco}
                 onChange={(e) => this.setState({ disco: e.target.value }, this.load)}>
                 <option value="all">All Discos</option>
-                {this.state.discos.map((d) => (
+                {discos.map((d) => (
                   <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>
                 ))}
               </select>
@@ -69,19 +71,49 @@ class Dashboard extends React.Component {
         </div>
 
         <div className="card">
+          <h2>Live Power, Reactive Power &amp; Frequency</h2>
+          <div className="table-wrap" style={{ maxHeight: 320 }}>
+            <table className="data">
+              <thead>
+                <tr><th>Feeder</th><th>Disco</th><th>Active Power</th>
+                  <th>Reactive Power</th><th>Power Factor</th><th>Frequency (Hz)</th>
+                  <th>D.A.R Today</th></tr>
+              </thead>
+              <tbody>
+                {data.feeders.map((f) => (
+                  <tr key={f.meter_id}>
+                    <td>{f.feeder_name || f.meter_id}</td>
+                    <td>{f.disco || '—'}</td>
+                    <td>{n1(f.active_power)}</td>
+                    <td>{n1(f.reactive_power)}</td>
+                    <td>{n1(f.power_factor, 3)}</td>
+                    <td>{n1(f.frequency, 2)}</td>
+                    <td style={{ color: darColor(+f.dar_today), fontWeight: 700 }}>{f.dar_today}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="card">
           <h2>Today's D.A.R by Feeder</h2>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={chartData} margin={{ bottom: 60 }}>
+          <div className="chart-scroll">
+            <BarChart width={chartWidth} height={330} data={chartData}
+              margin={{ bottom: 70, top: 20 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" angle={-40} textAnchor="end" interval={0} height={70} tick={{ fontSize: 11 }} />
+              <XAxis dataKey="name" angle={-40} textAnchor="end" interval={0}
+                height={80} tick={{ fontSize: 11 }} />
               <YAxis domain={[0, 100]} unit="%" />
               <Tooltip formatter={(v) => v + '%'} />
               <Bar isAnimationActive={false} dataKey="dar" name="D.A.R %">
+                <LabelList dataKey="dar" position="top"
+                  formatter={(v) => v + '%'} style={{ fontSize: 11, fontWeight: 700, fill: '#223344' }} />
                 {chartData.map((d, i) => <Cell key={i} fill={darColor(d.dar)} />)}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
-          <p className="muted">Green ≥ 95% · Amber 80–95% · Red &lt; 80%</p>
+          </div>
+          <p className="muted">Green ≥ 95% · Amber 80–95% · Red &lt; 80% — scroll sideways for more feeders.</p>
         </div>
 
         <div className="card">

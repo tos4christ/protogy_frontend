@@ -197,3 +197,41 @@ tr.row-live td { animation: rowFlash 1.2s ease-out; }
 .nt-sub { font-size: 11px; opacity: .8; margin-top: 2px; }
 @media (max-width: 860px) { .nerc-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .nerc-grid { grid-template-columns: 1fr; } }
+
+/* ---- NERC feedback round ---- */
+/* Phase colours (item 1): L1 = Red, L2 = Yellow, L3 = Blue */
+table.data th.ph-r { background: #b02a37; }
+table.data th.ph-y { background: #c79100; }
+table.data th.ph-b { background: #1653a1; }
+
+/* Scrollable, always-labelled DAR chart (item 5) */
+.chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 0; }
+
+/* Collapsible sidebar (item 6) */
+.nav-toggle { background: none; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 18px; padding: 4px 12px; margin-right: 14px; cursor: pointer; color: var(--navy); }
+.shell.nav-collapsed .sidebar { display: none; }
+
+/* ============================================================
+   FEEDER STATUS DENSITY — EDIT THIS BLOCK to taste (item 6)
+   Adjust the three custom properties; everything below follows.
+   ============================================================ */
+.status-dense {
+  --fs-font: 12px;        /* cell text size            */
+  --fs-pad-y: 3px;        /* vertical padding per cell */
+  --fs-pad-x: 6px;        /* horizontal padding        */
+}
+.status-dense table.data th,
+.status-dense table.data td {
+  font-size: var(--fs-font);
+  padding: var(--fs-pad-y) var(--fs-pad-x);
+  border: 1px solid #cdd8e2;       /* full grid borders for readability */
+}
+.status-dense table.data th { border-color: #33506b; }
+.status-dense .table-wrap { max-height: calc(100vh - 250px); }
+.status-dense table.data.wide { min-width: 1500px; }
+.status-dense .badge { padding: 1px 8px; font-size: 10.5px; }
+/* ============================================================ */
+
+.sub-h { font-size: 13.5px; color: var(--navy); margin: 14px 0 8px; }

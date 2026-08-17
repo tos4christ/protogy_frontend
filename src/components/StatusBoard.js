@@ -1,11 +1,34 @@
 import React from 'react';
 import api from '../api';
 
-// FEATURE 4: status of all feeders - all / online / offline, auto-refreshes.
+// NERC item 4: last reading as "minutes ago"
+function minutesAgo(ts) {
+  if (!ts) return '—';
+  const s = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m ago`;
+}
+
+// NERC item 6: column order — feeder/connectivity/last-reading/phases first,
+// admin columns (Disco, Meter ID, Onboarding) at the end.
+// NERC item 1: phase colours Red/Yellow/Blue on L1/L2/L3 headers.
+const PHASE = { 1: 'ph-r', 2: 'ph-y', 3: 'ph-b' };
+const NUM_COLS = [
+  ['voltage_l1', 1, 'V L1', PHASE[1]], ['voltage_l2', 1, 'V L2', PHASE[2]], ['voltage_l3', 1, 'V L3', PHASE[3]],
+  ['current_l1', 2, 'I L1', PHASE[1]], ['current_l2', 2, 'I L2', PHASE[2]], ['current_l3', 2, 'I L3', PHASE[3]],
+  ['active_power', 1, 'Active Pwr'], ['reactive_power', 1, 'Reactive Pwr'], ['apparent_power', 1, 'Apparent Pwr'],
+  ['power_factor', 3, 'PF'], ['frequency', 2, 'Freq'],
+  ['active_energy', 1, 'Active Energy'], ['reactive_energy', 1, 'Reactive Energy'], ['apparent_energy', 1, 'Apparent Energy'],
+];
+
 class StatusBoard extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { filter: 'all', disco: 'all', discos: [], search: '', searchInput: '', data: null, error: null, busy: false };
+    this.state = { filter: 'all', disco: 'all', discos: [], search: '', searchInput: '',
+                   data: null, error: null, busy: false };
     this.searchTimer = null;
     this.load = this.load.bind(this);
     this.setFilter = this.setFilter.bind(this);
@@ -14,12 +37,18 @@ class StatusBoard extends React.Component {
   componentDidMount() {
     api.listDiscos().then((discos) => this.setState({ discos })).catch(() => {});
     this.load();
-    // polling becomes the FALLBACK (60s); the WebSocket does the real-time work
     this.timer = setInterval(() => { if (!document.hidden) this.load(); }, 60000);
     this.connectLive();
+    // re-render each 30s so "minutes ago" stays current even without new data
+    this.clockTimer = setInterval(() => this.forceUpdate(), 30000);
   }
 
-  // ---- real-time channel -------------------------------------------------
+  componentWillUnmount() {
+    clearInterval(this.timer); clearInterval(this.clockTimer);
+    clearTimeout(this.searchTimer); clearTimeout(this.wsRetry);
+    if (this.ws) { this.ws.onclose = null; this.ws.close(); }
+  }
+
   connectLive() {
     const token = localStorage.getItem('protogy_token');
     if (!token) return;
@@ -31,10 +60,10 @@ class StatusBoard extends React.Component {
         try { this.applyLive(JSON.parse(ev.data)); } catch (e) { /* ignore */ }
       };
       this.ws.onclose = () => {
-        this.ws = null; // reconnect with backoff while the tab is open
+        this.ws = null;
         this.wsRetry = setTimeout(() => this.connectLive(), 5000);
       };
-    } catch (e) { /* WebSocket unavailable: polling fallback still works */ }
+    } catch (e) { /* polling fallback active */ }
   }
 
   applyLive(msg) {
@@ -43,7 +72,6 @@ class StatusBoard extends React.Component {
     const meters = this.state.data.meters.slice();
     const i = meters.findIndex((m) => m.meter_id === msg.meterId);
     if (i === -1) {
-      // unknown meter (just auto-registered): refresh the list, throttled
       if (!this.unknownReload || Date.now() - this.unknownReload > 30000) {
         this.unknownReload = Date.now();
         this.load();
@@ -51,10 +79,8 @@ class StatusBoard extends React.Component {
       return;
     }
     meters[i] = {
-      ...meters[i],
-      connectivity: 'online',
-      last_reading_at: d.timestamp,
-      last_received_at: msg.receivedTs,
+      ...meters[i], connectivity: 'online',
+      last_reading_at: d.timestamp, last_received_at: msg.receivedTs,
       voltage_l1: d.voltage_l1, voltage_l2: d.voltage_l2, voltage_l3: d.voltage_l3,
       current_l1: d.current_l1, current_l2: d.current_l2, current_l3: d.current_l3,
       active_power: d.active_power, reactive_power: d.reactive_power,
@@ -64,11 +90,6 @@ class StatusBoard extends React.Component {
       apparent_energy: d.apparent_energy,
     };
     this.setState({ data: { ...this.state.data, meters } });
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.timer); clearTimeout(this.searchTimer); clearTimeout(this.wsRetry);
-    if (this.ws) { this.ws.onclose = null; this.ws.close(); }
   }
 
   setFilter(filter) { this.setState({ filter }, this.load); }
@@ -87,16 +108,15 @@ class StatusBoard extends React.Component {
       !q || (m.feeder_name || '').toLowerCase().includes(q)
          || (m.meter_id || '').toLowerCase().includes(q)
          || (m.disco || '').toLowerCase().includes(q)) : [];
+
     return (
-      <div className="card">
-        <h2>Feeder Status <span className="live-dot" title="Live updates active"></span> {busy && <span className="muted">refreshing…</span>}</h2>
+      <div className="card status-dense">
+        <h2>Feeder Status <span className="live-dot" title="Live updates active"></span>
+          {' '}{busy && <span className="muted">refreshing…</span>}</h2>
         <div className="controls">
           {['all', 'online', 'offline'].map((f) => (
-            <button key={f}
-              className={'btn ' + (filter === f ? '' : 'secondary')}
-              onClick={() => this.setFilter(f)}>
-              {f.toUpperCase()}
-            </button>
+            <button key={f} className={'btn ' + (filter === f ? '' : 'secondary')}
+              onClick={() => this.setFilter(f)}>{f.toUpperCase()}</button>
           ))}
           <label>Disco
             <select value={disco}
@@ -118,49 +138,34 @@ class StatusBoard extends React.Component {
           </label>
         </div>
         {error && <div className="error">{error}</div>}
-        {data && data.counts && (
-          <div className="stat-grid" style={{ marginBottom: 14 }}>
-            <div className="stat"><div className="v">{data.count}</div><div className="l">Total feeders</div></div>
-            <div className="stat"><div className="v">{data.counts.online || 0}</div><div className="l">Online</div></div>
-            <div className="stat"><div className="v">{data.counts.offline || 0}</div><div className="l">Offline</div></div>
-            <div className="stat"><div className="v">{data.counts.never_reported || 0}</div><div className="l">Never reported</div></div>
-          </div>
-        )}
         {data && (
           <div className="table-wrap">
             <table className="data wide">
               <thead>
                 <tr>
-                  <th>Feeder</th><th>Disco</th><th>Meter ID</th><th>Connectivity</th><th>Onboarding</th>
-                  <th>Last Reading</th>
-                  <th>V L1</th><th>V L2</th><th>V L3</th>
-                  <th>I L1</th><th>I L2</th><th>I L3</th>
-                  <th>Active Pwr</th><th>Reactive Pwr</th><th>Apparent Pwr</th>
-                  <th>PF</th><th>Freq</th>
-                  <th>Active Energy</th><th>Reactive Energy</th><th>Apparent Energy</th>
+                  <th>Feeder</th><th>Connectivity</th><th>Last Reading</th>
+                  {NUM_COLS.map(([k, , label, ph]) => (
+                    <th key={k} className={ph || ''}>{label}</th>
+                  ))}
+                  <th>Disco</th><th>Meter ID</th><th>Onboarding</th>
                 </tr>
               </thead>
               <tbody>
                 {visible.map((m) => (
                   <tr key={m.meter_id + '|' + (m.last_received_at || '')} className="row-live">
                     <td>{m.feeder_name || '—'}</td>
+                    <td><span className={'badge ' + m.connectivity}>{m.connectivity}</span></td>
+                    <td>{minutesAgo(m.last_reading_at)}</td>
+                    {NUM_COLS.map(([k, dp]) => (
+                      <td key={k}>{m[k] != null ? Number(m[k]).toFixed(dp) : '—'}</td>
+                    ))}
                     <td>{m.disco || '—'}</td>
                     <td>{m.meter_id}</td>
-                    <td><span className={'badge ' + m.connectivity}>{m.connectivity}</span></td>
                     <td><span className={'badge ' + m.onboarding_status}>{m.onboarding_status}</span></td>
-                    <td>{m.last_reading_at ? new Date(m.last_reading_at).toLocaleString() : '—'}</td>
-                    {[['voltage_l1',1],['voltage_l2',1],['voltage_l3',1],
-                      ['current_l1',2],['current_l2',2],['current_l3',2],
-                      ['active_power',1],['reactive_power',1],['apparent_power',1],
-                      ['power_factor',3],['frequency',2],
-                      ['active_energy',1],['reactive_energy',1],['apparent_energy',1]]
-                      .map(([k, dp]) => (
-                        <td key={k}>{m[k] != null ? Number(m[k]).toFixed(dp) : '—'}</td>
-                      ))}
                   </tr>
                 ))}
                 {visible.length === 0 && (
-                  <tr><td colSpan="20" className="muted">No feeders match this filter.</td></tr>
+                  <tr><td colSpan={NUM_COLS.length + 6} className="muted">No feeders match this filter.</td></tr>
                 )}
               </tbody>
             </table>

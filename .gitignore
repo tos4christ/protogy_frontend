@@ -22,7 +22,13 @@ logs/
 Thumbs.db
 
 # Ensure build and dist output folders ARE tracked
-# !build/
-# !dist/
-# !frontend/build/
-# !frontend/dist/
+!build/
+!dist/
+!frontend/build/
+!frontend/dist/
+
+# Ensure build and dist output folders ARE NOT tracked
+build/
+dist/
+frontend/build/
+frontend/dist/

@@ -76,7 +76,7 @@ class Dashboard extends React.Component {
             <table className="data">
               <thead>
                 <tr><th>Feeder</th><th>Disco</th><th>Active Power</th>
-                  <th>Reactive Power</th><th>Power Factor</th><th>Frequency (Hz)</th>
+                  <th>Reactive Power</th><th>Power Factor (ratio)</th><th>Frequency (Hz)</th>
                   <th>D.A.R Today</th></tr>
               </thead>
               <tbody>
@@ -84,8 +84,8 @@ class Dashboard extends React.Component {
                   <tr key={f.meter_id}>
                     <td>{f.feeder_name || f.meter_id}</td>
                     <td>{f.disco || '—'}</td>
-                    <td>{n1(f.active_power)}</td>
-                    <td>{n1(f.reactive_power)}</td>
+                    <td>{n1(f.active_power)} {f.power_unit || ''}</td>
+                    <td>{n1(f.reactive_power)} {f.power_unit || ''}</td>
                     <td>{n1(f.power_factor, 3)}</td>
                     <td>{n1(f.frequency, 2)}</td>
                     <td style={{ color: darColor(+f.dar_today), fontWeight: 700 }}>{f.dar_today}%</td>

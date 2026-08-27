@@ -19,9 +19,10 @@ class NercDashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      s: null, table: null, discos: [], disco: 'all',
+      s: null, table: null, discos: [], disco: 'all', band: 'all',
       date: today(), month: new Date().toISOString().slice(0, 7),
       from: today(), to: today(), error: null,
+      feeders: null,
     };
     this.load = this.load.bind(this);
   }
@@ -33,17 +34,33 @@ class NercDashboard extends React.Component {
   }
   componentWillUnmount() { clearInterval(this.timer); }
 
+  // Single load path: tiles, the executive-summary table, and the feeder
+  // drill-down all read the same `disco` + `band` selection, so the DAR
+  // shown always matches the filters on screen — e.g. "DAR for Band A in
+  // Disco X" — and never disagrees with the reports below (NERC review II,
+  // items ix/x/xiii; Band filtering added after the initial review).
   load() {
-    api.nercSummary(this.state.disco)
+    const { disco, band, date } = this.state;
+    api.nercSummary(disco, band)
       .then((s) => this.setState({ s, error: null }))
       .catch((e) => this.setState({ error: e.message }));
-    api.nercTable(this.state.date)
+    api.nercTable(date, disco, band)
       .then((table) => this.setState({ table }))
       .catch(() => {});
+    // Feeder-level drill-down only makes sense once narrowed by Disco and/or
+    // Band — it's what "logically connects" the executive summary row above
+    // it to the per-feeder rows in the regulator reports below (item xiii).
+    if (disco !== 'all' || band !== 'all') {
+      api.nercCompliance(date, disco, band)
+        .then((c) => this.setState({ feeders: c.feeders }))
+        .catch(() => this.setState({ feeders: null }));
+    } else {
+      this.setState({ feeders: null });
+    }
   }
 
   render() {
-    const { s, table, discos, disco, date, month, from, to, error } = this.state;
+    const { s, table, discos, disco, band, date, month, from, to, error } = this.state;
     return (
       <div>
         {error && <div className="error">{error}</div>}
@@ -54,6 +71,13 @@ class NercDashboard extends React.Component {
                 onChange={(e) => this.setState({ disco: e.target.value }, this.load)}>
                 <option value="all">All Discos</option>
                 {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco}</option>)}
+              </select>
+            </label>
+            <label>Band
+              <select value={band}
+                onChange={(e) => this.setState({ band: e.target.value }, this.load)}>
+                <option value="all">All Bands</option>
+                {['A', 'B', 'C', 'D', 'E'].map((b) => <option key={b} value={b}>Band {b}</option>)}
               </select>
             </label>
             {s && <span className="muted" style={{ marginLeft: 'auto' }}>
@@ -87,6 +111,10 @@ class NercDashboard extends React.Component {
               <input type="date" value={date}
                 onChange={(e) => this.setState({ date: e.target.value }, this.load)} />
             </label>
+            <span className="muted" style={{ marginLeft: 'auto' }}>
+              Showing: <b>{disco === 'all' ? 'All DisCos' : disco}</b>
+              {band !== 'all' && <> · Band <b>{band}</b></>}
+            </span>
           </div>
           {table && (
             <div className="table-wrap">
@@ -115,14 +143,52 @@ class NercDashboard extends React.Component {
           )}
         </div>
 
+        {(disco !== 'all' || band !== 'all') && (
+          <div className="card">
+            <h2>Feeder Drill-Down — {disco === 'all' ? 'All DisCos' : disco}
+              {band !== 'all' ? `, Band ${band}` : ''}</h2>
+            {this.state.feeders ? (
+              <div className="table-wrap">
+                <table className="data">
+                  <thead>
+                    <tr><th>Feeder</th><th>Band</th><th>DAR (%)</th><th>Current Uptime (Hrs)</th>
+                      <th>Voltage Uptime (Hrs)</th><th>Compliance (%)</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    {this.state.feeders.map((f) => (
+                      <tr key={f.meterId}>
+                        <td>{f.feeder}</td>
+                        <td>{f.tariffBand || '—'}</td>
+                        <td>{f.darPct}%</td>
+                        <td>{f.currentUptimeH} Hrs</td>
+                        <td>{f.voltageUptimeH} Hrs</td>
+                        <td>{f.compliancePct}%</td>
+                        <td><span className={'badge ' + (f.status === 'Met' ? 'good' : 'bad')}>{f.status}</span></td>
+                      </tr>
+                    ))}
+                    {this.state.feeders.length === 0 &&
+                      <tr><td colSpan="7" className="muted">No feeders match this filter yet.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            ) : <p className="muted">Loading feeders…</p>}
+          </div>
+        )}
+
         <div className="card">
           <h2>Regulator Reports (Excel)</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Reports export for: <b>{disco === 'all' ? 'All DisCos' : disco}</b>
+            {band !== 'all' && <> · Band <b>{band}</b></>} — matching the Disco/Band
+            selected above. Change them there to export a narrower slice, e.g. DAR for a
+            single Band within a single Disco.
+          </p>
           <div className="controls">
             <label>Report date
               <input type="date" value={date}
                 onChange={(e) => this.setState({ date: e.target.value })} />
             </label>
-            <a className="btn" href={api.nercReportUrl('daily-compliant', `date=${date}`)} download>
+            <a className="btn" href={api.nercReportUrl('daily-compliant', `date=${date}`, disco, band)} download>
               Daily Compliant Feeders
             </a>
           </div>
@@ -133,7 +199,7 @@ class NercDashboard extends React.Component {
             <label>To
               <input type="date" value={to} onChange={(e) => this.setState({ to: e.target.value })} />
             </label>
-            <a className="btn" href={api.nercReportUrl('data-acquisition', `from=${from}&to=${to}`)} download>
+            <a className="btn" href={api.nercReportUrl('data-acquisition', `from=${from}&to=${to}`, disco, band)} download>
               Data Acquisition Report
             </a>
           </div>
@@ -141,7 +207,7 @@ class NercDashboard extends React.Component {
             <label>Month
               <input type="month" value={month} onChange={(e) => this.setState({ month: e.target.value })} />
             </label>
-            <a className="btn" href={api.nercReportUrl('month-to-date', `month=${month}`)} download>
+            <a className="btn" href={api.nercReportUrl('month-to-date', `month=${month}`, disco, band)} download>
               Month To Date Report
             </a>
           </div>

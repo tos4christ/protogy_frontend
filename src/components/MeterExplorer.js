@@ -56,10 +56,14 @@ class MeterExplorer extends React.Component {
     if (view === 'data') p = api.readings(meterId, date, page, limit, order);
     else if (view === 'dar') p = api.darRange(meterId, from, to);
     else if (view === 'charts') {
+      // Snapshot views (intraday DAR, electrical series) use the END of the
+      // From/To range as their date, so there's one clear date range for
+      // this view instead of a redundant separate "today" field (NERC
+      // review II, item viii).
       p = Promise.all([
         api.darRange(meterId, from, to),
-        api.darIntraday(meterId, date),
-        api.series(meterId, date),
+        api.darIntraday(meterId, to),
+        api.series(meterId, to),
       ]).then(([trend, intraday, series]) => ({ trend, intraday, series }));
     } else if (view === 'uptime') p = api.uptime(meterId, date);
     else if (view === 'gaps') p = api.gaps(meterId, date);
@@ -109,7 +113,7 @@ class MeterExplorer extends React.Component {
     const s = this.state;
     const discos = Array.from(new Set(this.props.meters.map((m) => m.disco).filter(Boolean))).sort();
     const meters = this.props.meters.filter((m) => s.disco === 'all' || m.disco === s.disco);
-    const needsDate = ['data', 'uptime', 'gaps', 'charts'].includes(s.view);
+    const needsDate = ['data', 'uptime', 'gaps'].includes(s.view);
     const needsRange = ['dar', 'download', 'charts'].includes(s.view);
     return (
       <div className="controls">
@@ -157,7 +161,7 @@ class MeterExplorer extends React.Component {
             <label>From
               <input type="date" value={s.from} onChange={(e) => this.set({ from: e.target.value })} />
             </label>
-            <label>To
+            <label>To{s.view === 'charts' ? ' (also the snapshot date)' : ''}
               <input type="date" value={s.to} onChange={(e) => this.set({ to: e.target.value })} />
             </label>
           </React.Fragment>
@@ -240,7 +244,7 @@ class MeterExplorer extends React.Component {
         </div>
 
         <div className="card">
-          <h2>Current (A) &amp; Active Power</h2>
+          <h2>Current (A) &amp; Active Power ({r.series.powerUnit || 'kW'})</h2>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={seriesData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -250,7 +254,7 @@ class MeterExplorer extends React.Component {
               <Line isAnimationActive={false} yAxisId="i" dataKey="i1" name="I L1 (A)" stroke="#d64545" dot={false} />
               <Line isAnimationActive={false} yAxisId="i" dataKey="i2" name="I L2 (A)" stroke="#e8a80c" dot={false} />
               <Line isAnimationActive={false} yAxisId="i" dataKey="i3" name="I L3 (A)" stroke="#0b6ba8" dot={false} />
-              <Line isAnimationActive={false} yAxisId="p" dataKey="p" name="Active Power" stroke="#2f9e44" strokeWidth={2} dot={false} />
+              <Line isAnimationActive={false} yAxisId="p" dataKey="p" name={`Active Power (${r.series.powerUnit || 'kW'})`} stroke="#2f9e44" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -385,6 +389,7 @@ class MeterExplorer extends React.Component {
     if (!r) return null;
     const rows = [
       ['Meter ID', r.meter_id], ['Feeder Name', r.feeder_name], ['Disco', r.disco],
+      ['Tariff Band', r.tariff_band],
       ['Controller', r.controller_id], ['Location', r.location],
       ['Status', r.status], ['Expected Interval', r.expected_interval_s + ' s'],
       ['Onboarded By', r.onboarded_by],

@@ -9,7 +9,7 @@ class OnboardMeter extends React.Component {
     super(props);
     this.state = {
       meterId: '', feederName: '', location: '', intervalSeconds: 15, controllerId: '', disco: '', latitude: '', longitude: '',
-      station: '', motherFeeder: '', category: '', state: '', voltageClass: '', nominalVoltage: '', latitude: '', longitude: '',
+      station: '', motherFeeder: '', category: '', state: '', voltageClass: '', nominalVoltage: '', tariffBand: '',
       user: '', busy: false, result: null, error: null,
     };
     this.handleChange = this.handleChange.bind(this);
@@ -21,7 +21,7 @@ class OnboardMeter extends React.Component {
   handleSubmit(e) {
     e.preventDefault();
     const { meterId, feederName, location, intervalSeconds, user, controllerId, disco, latitude, longitude,
-      station, motherFeeder, category, state, voltageClass, nominalVoltage } = this.state;
+      station, motherFeeder, category, state, voltageClass, nominalVoltage, tariffBand } = this.state;
     this.setState({ busy: true, error: null, result: null });
     api.onboardMeter({
       meterId: meterId.trim(),
@@ -39,6 +39,7 @@ class OnboardMeter extends React.Component {
       state: state.trim() || null,
       voltageClass: voltageClass.trim() || null,
       nominalVoltage: nominalVoltage.trim() || null,
+      tariffBand: tariffBand.trim() || null,
     })
       .then((result) => {
         this.setState({ busy: false, result });
@@ -97,14 +98,6 @@ class OnboardMeter extends React.Component {
               <input name="longitude" value={s.longitude} onChange={this.handleChange}
                 placeholder="e.g. 7.4985" />
             </label>
-            <label>Latitude (for the map)
-              <input name="latitude" value={s.latitude} onChange={this.handleChange}
-                placeholder="e.g. 9.0620" />
-            </label>
-            <label>Longitude (for the map)
-              <input name="longitude" value={s.longitude} onChange={this.handleChange}
-                placeholder="e.g. 7.4530" />
-            </label>
             <label>Station
               <input name="station" value={s.station} onChange={this.handleChange} />
             </label>
@@ -131,6 +124,16 @@ class OnboardMeter extends React.Component {
             <label>Nominal Voltage (meter units, for compliance band)
               <input name="nominalVoltage" value={s.nominalVoltage} onChange={this.handleChange}
                 placeholder="e.g. 11 or 415" />
+            </label>
+            <label>Tariff Band (NERC A–E)
+              <select name="tariffBand" value={s.tariffBand} onChange={this.handleChange}>
+                <option value="">— select —</option>
+                <option value="A">Band A</option>
+                <option value="B">Band B</option>
+                <option value="C">Band C</option>
+                <option value="D">Band D</option>
+                <option value="E">Band E</option>
+              </select>
             </label>
             <label>Controller ID (optional)
               <input name="controllerId" value={s.controllerId} onChange={this.handleChange}

@@ -15,13 +15,22 @@ function minutesAgo(ts) {
 // NERC item 6: column order — feeder/connectivity/last-reading/phases first,
 // admin columns (Disco, Meter ID, Onboarding) at the end.
 // NERC item 1: phase colours Red/Yellow/Blue on L1/L2/L3 headers.
+// NERC review II, item xi: every electrical column carries its unit. Voltage,
+// current and frequency are always in the same SI unit regardless of meter,
+// so the unit lives in the header. Power and energy can be reported in W/kW
+// or Wh/kWh per meter (see meters.power_unit / energy_unit), so those
+// columns carry the unit per-row instead of a single fixed header unit.
 const PHASE = { 1: 'ph-r', 2: 'ph-y', 3: 'ph-b' };
 const NUM_COLS = [
-  ['voltage_l1', 1, 'V L1', PHASE[1]], ['voltage_l2', 1, 'V L2', PHASE[2]], ['voltage_l3', 1, 'V L3', PHASE[3]],
-  ['current_l1', 2, 'I L1', PHASE[1]], ['current_l2', 2, 'I L2', PHASE[2]], ['current_l3', 2, 'I L3', PHASE[3]],
-  ['active_power', 1, 'Active Pwr'], ['reactive_power', 1, 'Reactive Pwr'], ['apparent_power', 1, 'Apparent Pwr'],
-  ['power_factor', 3, 'PF'], ['frequency', 2, 'Freq'],
-  ['active_energy', 1, 'Active Energy'], ['reactive_energy', 1, 'Reactive Energy'], ['apparent_energy', 1, 'Apparent Energy'],
+  ['voltage_l1', 1, 'V L1 (V)', PHASE[1]], ['voltage_l2', 1, 'V L2 (V)', PHASE[2]], ['voltage_l3', 1, 'V L3 (V)', PHASE[3]],
+  ['current_l1', 2, 'I L1 (A)', PHASE[1]], ['current_l2', 2, 'I L2 (A)', PHASE[2]], ['current_l3', 2, 'I L3 (A)', PHASE[3]],
+  ['active_power', 1, 'Active Pwr', null, 'power_unit'],
+  ['reactive_power', 1, 'Reactive Pwr', null, 'power_unit'],
+  ['apparent_power', 1, 'Apparent Pwr', null, 'power_unit'],
+  ['power_factor', 3, 'PF (ratio)'], ['frequency', 2, 'Freq (Hz)'],
+  ['active_energy', 1, 'Active Energy', null, 'energy_unit'],
+  ['reactive_energy', 1, 'Reactive Energy', null, 'energy_unit'],
+  ['apparent_energy', 1, 'Apparent Energy', null, 'energy_unit'],
 ];
 
 class StatusBoard extends React.Component {
@@ -147,7 +156,7 @@ class StatusBoard extends React.Component {
                   {NUM_COLS.map(([k, , label, ph]) => (
                     <th key={k} className={ph || ''}>{label}</th>
                   ))}
-                  <th>Disco</th><th>Meter ID</th><th>Onboarding</th>
+                  <th>Disco</th><th>Band</th><th>Meter ID</th><th>Onboarding</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,16 +165,21 @@ class StatusBoard extends React.Component {
                     <td>{m.feeder_name || '—'}</td>
                     <td><span className={'badge ' + m.connectivity}>{m.connectivity}</span></td>
                     <td>{minutesAgo(m.last_reading_at)}</td>
-                    {NUM_COLS.map(([k, dp]) => (
-                      <td key={k}>{m[k] != null ? Number(m[k]).toFixed(dp) : '—'}</td>
+                    {NUM_COLS.map(([k, dp, , , unitField]) => (
+                      <td key={k}>
+                        {m[k] != null
+                          ? Number(m[k]).toFixed(dp) + (unitField ? ' ' + (m[unitField] || '') : '')
+                          : '—'}
+                      </td>
                     ))}
                     <td>{m.disco || '—'}</td>
+                    <td>{m.tariff_band || '—'}</td>
                     <td>{m.meter_id}</td>
                     <td><span className={'badge ' + m.onboarding_status}>{m.onboarding_status}</span></td>
                   </tr>
                 ))}
                 {visible.length === 0 && (
-                  <tr><td colSpan={NUM_COLS.length + 6} className="muted">No feeders match this filter.</td></tr>
+                  <tr><td colSpan={NUM_COLS.length + 7} className="muted">No feeders match this filter.</td></tr>
                 )}
               </tbody>
             </table>

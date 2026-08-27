@@ -46,10 +46,34 @@ const api = {
     : null),
 
   health: () => j('/health'),
-  nercSummary: (disco) => j('/nerc/summary' + (disco && disco !== 'all' ? `?disco=${encodeURIComponent(disco)}` : '')),
-  nercTable: (date) => j(`/nerc/summary-table${date ? `?date=${date}` : ''}`),
-  nercCompliance: (date) => j(`/nerc/compliance${date ? `?date=${date}` : ''}`),
-  nercReportUrl: (name, qs) => `${BASE}/nerc/report/${name}?${qs}&token=${encodeURIComponent(token())}`,
+  nercSummary: (disco, band) => {
+    const qs = [];
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    return j(`/nerc/summary${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
+  nercTable: (date, disco, band) => {
+    const qs = [];
+    if (date) qs.push(`date=${date}`);
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    return j(`/nerc/summary-table${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
+  nercCompliance: (date, disco, band) => {
+    const qs = [];
+    if (date) qs.push(`date=${date}`);
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    return j(`/nerc/compliance${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
+  // disco + band are folded into every report link so exports always match
+  // what's selected on screen (NERC review II, items ix/x/xiii, plus Band
+  // filtering added afterward so DAR can be pulled per-Band per-Disco).
+  nercReportUrl: (name, qs, disco, band) =>
+    `${BASE}/nerc/report/${name}?${qs}` +
+    `${disco && disco !== 'all' ? `&disco=${encodeURIComponent(disco)}` : ''}` +
+    `${band && band !== 'all' ? `&band=${encodeURIComponent(band)}` : ''}` +
+    `&token=${encodeURIComponent(token())}`,
   getSettings: () => j('/settings'),
   saveSettings: (body) => j('/settings', {
     method: 'PUT',

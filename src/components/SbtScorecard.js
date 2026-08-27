@@ -132,7 +132,7 @@ class SbtScorecard extends React.Component {
               <thead>
                 <tr><th>Feeder</th><th>Disco</th><th>Band</th><th>Min Hrs</th><th>Actual Hrs</th>
                   <th>Shortfall</th><th>Status</th><th>Consecutive Days Short</th>
-                  <th>Flags</th><th>Avg Load (kW)</th><th>Revenue at Risk</th></tr>
+                  <th>Flags</th><th>Avg Load (kW)</th><th>Revenue at Risk</th><th>Readings Today</th></tr>
               </thead>
               <tbody>
                 {feeders.map((f) => (
@@ -149,16 +149,25 @@ class SbtScorecard extends React.Component {
                     </td>
                     <td>{f.avgLoadKW != null ? f.avgLoadKW : '—'}</td>
                     <td>{ngn(f.revenueAtRiskNgn)}</td>
+                    <td>
+                      {f.readingsToday === 0
+                        ? <span className="badge bad" title="Zero readings today under this meter_id — likely a duplicate/mismatched meter_id, not a real compliance failure. See the meter_id check in Settings help.">No data ⚠</span>
+                        : f.readingsToday}
+                    </td>
                   </tr>
                 ))}
                 {feeders.length === 0 &&
-                  <tr><td colSpan="11" className="muted">No feeders match this filter.</td></tr>}
+                  <tr><td colSpan="12" className="muted">No feeders match this filter.</td></tr>}
               </tbody>
             </table>
           </div>
           <p className="muted">Revenue at risk is estimated from each feeder's own measured average
             load today × shortfall hours × the Band tariff set in Settings — never a guessed
             customer count. Treat it as a planning estimate.</p>
+          <p className="muted">"No data ⚠" means zero telemetry reached this exact meter_id today —
+            that's a data problem (often a duplicate/mismatched meter_id from re-onboarding),
+            not a real compliance failure. Check <code>meters</code> for a duplicate row with the
+            same feeder name.</p>
         </div>
       </div>
     );

@@ -18,7 +18,7 @@ class Dashboard extends React.Component {
     super(props);
     this.state = {
       data: null, error: null, disco: 'all', band: 'all', discos: [],
-      page: 1, limit: 50, groupByBand: false,
+      page: 1, limit: 50, groupByBand: false, zoom: 60,
     };
     this.load = this.load.bind(this);
   }
@@ -44,20 +44,19 @@ class Dashboard extends React.Component {
   }
 
   render() {
-    const { data, error, disco, band, discos, page, limit, groupByBand } = this.state;
+    const { data, error, disco, band, discos, page, limit, groupByBand, zoom } = this.state;
     if (error) return <div className="error">{error}</div>;
     if (!data) return <div className="card">Loading dashboard…</div>;
     const t = data.totals;
     const totalPages = data.totalPages || 1;
 
-    // Compact SCADA-style bars: fixed, narrow width per bar; the page (not
-    // the whole fleet) determines chart width, so it never has to squeeze
-    // or scroll through thousands of bars at once.
+    // Compact SCADA-style bars: width per bar is a user-controlled zoom
+    // level (px), not squeezed to fit the card — the chart scrolls
+    // sideways instead, and labels get more room to breathe as you zoom in.
     const chartData = data.feeders.map((f) => ({
       name: f.feeder_name || f.meter_id, dar: +f.dar_today, band: f.tariff_band || '—',
     }));
-    const BAR_W = 34;
-    const chartWidth = Math.max(chartData.length * BAR_W, 700);
+    const chartWidth = Math.max(chartData.length * zoom, 700);
 
     const bandChartData = (data.bandSummary || []).map((b) => ({
       name: 'Band ' + b.band, dar: b.avgDarToday, feeders: b.feeders,
@@ -188,24 +187,41 @@ class Dashboard extends React.Component {
             <button className="btn secondary" disabled={page >= totalPages}
               onClick={() => this.setState({ page: page + 1 }, this.load)}>Next ›</button>
           </div>
+          <div className="controls">
+            <label>Zoom
+              <button className="btn secondary" style={{ padding: '2px 10px' }}
+                onClick={() => this.setState({ zoom: Math.max(30, zoom - 15) })}>−</button>
+              <input type="range" min="30" max="180" step="5" value={zoom}
+                style={{ verticalAlign: 'middle', margin: '0 8px' }}
+                onChange={(e) => this.setState({ zoom: +e.target.value })} />
+              <button className="btn secondary" style={{ padding: '2px 10px' }}
+                onClick={() => this.setState({ zoom: Math.min(180, zoom + 15) })}>+</button>
+            </label>
+            <span className="muted">{zoom}px per bar</span>
+            <button className="btn secondary" style={{ marginLeft: 'auto' }}
+              onClick={() => this.setState({ zoom: 60 })}>Reset zoom</button>
+          </div>
           <div className="chart-scroll">
-            <BarChart width={chartWidth} height={280} data={chartData}
-              margin={{ bottom: 60, top: 20 }}>
+            <BarChart width={chartWidth} height={300} data={chartData}
+              margin={{ bottom: 70, top: 24 }}
+              barCategoryGap={Math.max(4, Math.round(zoom * 0.15))}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" angle={-40} textAnchor="end" interval={0}
-                height={70} tick={{ fontSize: 10 }} />
+                height={80} tick={{ fontSize: Math.min(12, Math.max(9, Math.round(zoom / 7))) }} />
               <YAxis domain={[0, 100]} unit="%" />
               <Tooltip formatter={(v) => [v + '%', 'D.A.R']}
                 labelFormatter={(l, p) => (p && p[0] ? `${l} (Band ${p[0].payload.band})` : l)} />
-              <Bar isAnimationActive={false} dataKey="dar" name="D.A.R %">
+              <Bar isAnimationActive={false} dataKey="dar" name="D.A.R %"
+                barSize={Math.max(14, zoom - 14)}>
                 <LabelList dataKey="dar" position="top"
-                  formatter={(v) => v + '%'} style={{ fontSize: 10, fontWeight: 700, fill: '#223344' }} />
+                  formatter={(v) => v + '%'}
+                  style={{ fontSize: Math.min(12, Math.max(9, Math.round(zoom / 7))), fontWeight: 700, fill: '#223344' }} />
                 {chartData.map((d, i) => <Cell key={i} fill={darColor(d.dar)} />)}
               </Bar>
             </BarChart>
           </div>
-          <p className="muted">Green ≥ 95% · Amber 80–95% · Red &lt; 80% — paginated so the chart stays
-            compact with large feeder counts; scroll sideways within a page if needed.</p>
+          <p className="muted">Green ≥ 95% · Amber 80–95% · Red &lt; 80% — use the zoom slider to
+            widen bars, then scroll sideways within the page.</p>
         </div>
 
         <div className="card">

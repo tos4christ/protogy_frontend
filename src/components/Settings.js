@@ -8,6 +8,24 @@ const LABELS = {
   current_flow_threshold: 'Current flowing threshold (Amps)',
   voltage_present_threshold: 'Voltage present threshold (Volts)',
 };
+const SBT_HOURS_LABELS = {
+  sbt_hours_band_a: 'Band A minimum daily supply hours',
+  sbt_hours_band_b: 'Band B minimum daily supply hours',
+  sbt_hours_band_c: 'Band C minimum daily supply hours',
+  sbt_hours_band_d: 'Band D minimum daily supply hours',
+  sbt_hours_band_e: 'Band E minimum daily supply hours',
+};
+const SBT_TARIFF_LABELS = {
+  sbt_tariff_band_a: 'Band A tariff estimate (₦/kWh)',
+  sbt_tariff_band_b: 'Band B tariff estimate (₦/kWh)',
+  sbt_tariff_band_c: 'Band C tariff estimate (₦/kWh)',
+  sbt_tariff_band_d: 'Band D tariff estimate (₦/kWh)',
+  sbt_tariff_band_e: 'Band E tariff estimate (₦/kWh)',
+};
+const SBT_RULE_LABELS = {
+  sbt_explanation_days: 'Consecutive shortfall days before "explanation due" flag',
+  sbt_downgrade_days: 'Consecutive shortfall days before "downgrade risk" flag',
+};
 
 // Platform settings (admin): thresholds used by the NERC view and reports.
 class Settings extends React.Component {
@@ -47,6 +65,40 @@ class Settings extends React.Component {
                       values: { ...values, [k]: e.target.value } })} />
                 </label>
               ))}
+
+              <h3 className="sub-h">SBT Compliance Scorecard — minimum hours per Band</h3>
+              <p className="muted" style={{ marginTop: 0 }}>Per NERC's Service-Based Tariff order
+                (effective 3 Apr 2024). Update only if NERC revises these.</p>
+              {Object.keys(SBT_HOURS_LABELS).map((k) => (
+                <label key={k}>{SBT_HOURS_LABELS[k]}
+                  <input type="number" step="1" min="0" max="24" value={values[k] ?? ''}
+                    onChange={(e) => this.setState({
+                      values: { ...values, [k]: e.target.value } })} />
+                </label>
+              ))}
+
+              <h3 className="sub-h">SBT Compliance Scorecard — tariff estimates</h3>
+              <p className="muted" style={{ marginTop: 0 }}>Used only to estimate revenue exposure
+                from a supply shortfall. Rates vary by DisCo and change under NERC's monthly
+                review — treat as a planning estimate, not an official figure, and keep it in
+                sync with your DisCo's current tariff order.</p>
+              {Object.keys(SBT_TARIFF_LABELS).map((k) => (
+                <label key={k}>{SBT_TARIFF_LABELS[k]}
+                  <input type="number" step="0.5" min="0" value={values[k] ?? ''}
+                    onChange={(e) => this.setState({
+                      values: { ...values, [k]: e.target.value } })} />
+                </label>
+              ))}
+
+              <h3 className="sub-h">SBT Compliance Scorecard — early-warning thresholds</h3>
+              {Object.keys(SBT_RULE_LABELS).map((k) => (
+                <label key={k}>{SBT_RULE_LABELS[k]}
+                  <input type="number" step="1" min="1" value={values[k] ?? ''}
+                    onChange={(e) => this.setState({
+                      values: { ...values, [k]: e.target.value } })} />
+                </label>
+              ))}
+
               <button className="btn" type="submit" disabled={busy}>
                 {busy ? 'Saving…' : 'Save Settings'}
               </button>

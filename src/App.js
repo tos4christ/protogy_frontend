@@ -5,6 +5,7 @@ import MeterExplorer from './components/MeterExplorer';
 import Dashboard from './components/Dashboard';
 import MapView from './components/MapView';
 import NercDashboard from './components/NercDashboard';
+import SbtScorecard from './components/SbtScorecard';
 import Settings from './components/Settings';
 import AdminPanel from './components/AdminPanel';
 import Login from './components/Login';
@@ -15,6 +16,7 @@ import api, { setUnauthorizedHandler } from './api';
 const NAV = [
   ['dashboard', 'Dashboard', '▦'],
   ['nerc', 'NERC View', '◈'],
+  ['sbt', 'SBT Scorecard', '⚡'],
   // Eagle Eye (feeder map) hidden per NERC feedback — uncomment to restore:
   // ['map', 'Eagle Eye', '◎'],
   ['status', 'Feeder Status', '≣'],
@@ -96,6 +98,7 @@ class App extends React.Component {
             {error && <div className="error">{error}</div>}
             {tab === 'dashboard' && <Dashboard />}
             {tab === 'nerc' && <NercDashboard />}
+            {tab === 'sbt' && <SbtScorecard />}
             {tab === 'map' && <MapView />}
             {tab === 'status' && <StatusBoard />}
             {tab === 'explorer' &&

@@ -74,6 +74,13 @@ const api = {
     `${disco && disco !== 'all' ? `&disco=${encodeURIComponent(disco)}` : ''}` +
     `${band && band !== 'all' ? `&band=${encodeURIComponent(band)}` : ''}` +
     `&token=${encodeURIComponent(token())}`,
+  sbtScorecard: (date, disco, band) => {
+    const qs = [];
+    if (date) qs.push(`date=${date}`);
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    return j(`/nerc/sbt-scorecard${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
   getSettings: () => j('/settings'),
   saveSettings: (body) => j('/settings', {
     method: 'PUT',

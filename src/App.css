@@ -234,4 +234,18 @@ table.data th.ph-b { background: #1653a1; }
 .status-dense .badge { padding: 1px 8px; font-size: 10.5px; }
 /* ============================================================ */
 
+/* Reusable compact/SCADA density for any table (Dashboard's grouped-by-band
+   and live-power tables, StatusBoard's feeder grid), plus tighter control
+   rows so filter/pagination bars read like a SCADA toolbar. */
+table.data.compact th, table.data.compact td {
+  font-size: 12px; padding: 4px 7px; border: 1px solid #cdd8e2;
+}
+table.data.compact th { border-color: #33506b; }
+.card.scada { padding: 14px 16px; }
+.card.scada h2 { margin-bottom: 8px; font-size: 15px; }
+.compact-controls { gap: 8px; row-gap: 6px; }
+.compact-controls label { font-size: 12px; }
+.compact-controls select, .compact-controls input { padding: 3px 6px; font-size: 12.5px; }
+.compact-controls .btn { padding: 3px 10px; font-size: 12px; }
+
 .sub-h { font-size: 13.5px; color: var(--navy); margin: 14px 0 8px; }

@@ -107,12 +107,20 @@ const api = {
 
   listMeters: (disco) => j('/meters' + (disco && disco !== 'all' ? `?disco=${encodeURIComponent(disco)}` : '')),
   listDiscos: () => j('/discos'),
+  listBands: () => j('/bands'),
   onboardMeter: (body) => j('/meters', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }),
-  meterStatus: (filter, disco) => j(`/meters/status?filter=${filter}` + (disco && disco !== 'all' ? `&disco=${encodeURIComponent(disco)}` : '')),
+  meterStatus: (filter, disco, band, page, limit) => {
+    const qs = [`filter=${filter}`];
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    if (page) qs.push(`page=${page}`);
+    if (limit) qs.push(`limit=${limit}`);
+    return j(`/meters/status?${qs.join('&')}`);
+  },
   meterDetails: (id) => j(`/meters/${encodeURIComponent(id)}`),
   readings: (id, date, page, limit, order) =>
     j(`/meters/${encodeURIComponent(id)}/readings?date=${date}&page=${page}&limit=${limit}&order=${order}`),
@@ -121,7 +129,14 @@ const api = {
   darIntraday: (id, date) => j(`/meters/${encodeURIComponent(id)}/dar?date=${date}&resolution=15min`),
   uptime: (id, date) => j(`/meters/${encodeURIComponent(id)}/uptime?date=${date}`),
   gaps: (id, date) => j(`/meters/${encodeURIComponent(id)}/gaps?date=${date}`),
-  overview: (disco) => j('/dashboard/overview' + (disco && disco !== 'all' ? `?disco=${encodeURIComponent(disco)}` : '')),
+  overview: (disco, band, page, limit) => {
+    const qs = [];
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    if (page) qs.push(`page=${page}`);
+    if (limit) qs.push(`limit=${limit}`);
+    return j(`/dashboard/overview${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
   series: (id, date) => j(`/meters/${encodeURIComponent(id)}/series?date=${date}`),
   setMeterStatus: (id, status) => j(`/meters/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',

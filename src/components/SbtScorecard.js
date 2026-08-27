@@ -152,7 +152,9 @@ class SbtScorecard extends React.Component {
                     <td>
                       {f.readingsToday === 0
                         ? <span className="badge bad" title="Zero readings today under this meter_id — likely a duplicate/mismatched meter_id, not a real compliance failure. See the meter_id check in Settings help.">No data ⚠</span>
-                        : f.readingsToday}
+                        : f.currentSensorMissing
+                          ? <span className="badge bad" title="This meter is reporting (e.g. voltage) but its current/CT channel is not — likely a wiring or device configuration issue, not an app bug.">No current sensor ⚠</span>
+                          : f.readingsToday}
                     </td>
                   </tr>
                 ))}
@@ -166,8 +168,9 @@ class SbtScorecard extends React.Component {
             customer count. Treat it as a planning estimate.</p>
           <p className="muted">"No data ⚠" means zero telemetry reached this exact meter_id today —
             that's a data problem (often a duplicate/mismatched meter_id from re-onboarding),
-            not a real compliance failure. Check <code>meters</code> for a duplicate row with the
-            same feeder name.</p>
+            not a real compliance failure. "No current sensor ⚠" means the meter is reporting
+            (e.g. voltage) but its current/CT channel isn't — a device/wiring issue worth checking
+            physically, since the Actual Hours below will correctly read near-zero until it's fixed.</p>
         </div>
       </div>
     );

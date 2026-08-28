@@ -6,6 +6,8 @@ import Dashboard from './components/Dashboard';
 import MapView from './components/MapView';
 import NercDashboard from './components/NercDashboard';
 import SbtScorecard from './components/SbtScorecard';
+import LeagueTable from './components/LeagueTable';
+import DarAnomalies from './components/DarAnomalies';
 import Settings from './components/Settings';
 import AdminPanel from './components/AdminPanel';
 import Login from './components/Login';
@@ -17,8 +19,9 @@ const NAV = [
   ['dashboard', 'Dashboard', '▦'],
   ['nerc', 'NERC View', '◈'],
   ['sbt', 'SBT Scorecard', '⚡'],
-  // Eagle Eye (feeder map) hidden per NERC feedback — uncomment to restore:
-  // ['map', 'Eagle Eye', '◎'],
+  ['league', 'DisCo League Table', '🏆'],
+  ['anomalies', 'DAR Anomalies', '⚠', 'admin'],
+  ['map', 'Eagle Eye', '◎'],
   ['status', 'Feeder Status', '≣'],
   ['explorer', 'Feeder Explorer', '⌕'],
   ['onboard', 'Onboard Meter', '⊕', 'admin'],
@@ -99,6 +102,8 @@ class App extends React.Component {
             {tab === 'dashboard' && <Dashboard />}
             {tab === 'nerc' && <NercDashboard />}
             {tab === 'sbt' && <SbtScorecard />}
+            {tab === 'league' && <LeagueTable />}
+            {tab === 'anomalies' && session.role === 'admin' && <DarAnomalies />}
             {tab === 'map' && <MapView />}
             {tab === 'status' && <StatusBoard />}
             {tab === 'explorer' &&

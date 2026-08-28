@@ -81,6 +81,19 @@ const api = {
     if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
     return j(`/nerc/sbt-scorecard${qs.length ? `?${qs.join('&')}` : ''}`);
   },
+  leagueTable: (date, compareDays) => {
+    const qs = [];
+    if (date) qs.push(`date=${date}`);
+    if (compareDays) qs.push(`compareDays=${compareDays}`);
+    return j(`/nerc/league-table${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
+  darAnomalies: (days, disco, band) => {
+    const qs = [];
+    if (days) qs.push(`days=${days}`);
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    return j(`/nerc/dar-anomalies${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
   getSettings: () => j('/settings'),
   saveSettings: (body) => j('/settings', {
     method: 'PUT',

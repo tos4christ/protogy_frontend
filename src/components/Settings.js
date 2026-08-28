@@ -26,6 +26,12 @@ const SBT_RULE_LABELS = {
   sbt_explanation_days: 'Consecutive shortfall days before "explanation due" flag',
   sbt_downgrade_days: 'Consecutive shortfall days before "downgrade risk" flag',
 };
+const ANOMALY_LABELS = {
+  anomaly_window_days: 'Lookback window (days) for anomaly detection',
+  anomaly_perfect_days: 'Consecutive 100% DAR days before "suspiciously perfect" flag',
+  anomaly_jump_pp: 'Day-over-day DAR jump (percentage points) before "suspicious jump" flag',
+  anomaly_flatline_days: 'Consecutive identical DAR values before "flatline" flag',
+};
 
 // Platform settings (admin): thresholds used by the NERC view and reports.
 class Settings extends React.Component {
@@ -93,6 +99,18 @@ class Settings extends React.Component {
               <h3 className="sub-h">SBT Compliance Scorecard — early-warning thresholds</h3>
               {Object.keys(SBT_RULE_LABELS).map((k) => (
                 <label key={k}>{SBT_RULE_LABELS[k]}
+                  <input type="number" step="1" min="1" value={values[k] ?? ''}
+                    onChange={(e) => this.setState({
+                      values: { ...values, [k]: e.target.value } })} />
+                </label>
+              ))}
+
+              <h3 className="sub-h">DAR Anomaly Detection thresholds</h3>
+              <p className="muted" style={{ marginTop: 0 }}>Flags statistically suspicious DAR
+                reporting (not genuine compliance) for review — real telemetry rarely stays
+                exactly 100%, jumps hugely overnight, or repeats identically for long stretches.</p>
+              {Object.keys(ANOMALY_LABELS).map((k) => (
+                <label key={k}>{ANOMALY_LABELS[k]}
                   <input type="number" step="1" min="1" value={values[k] ?? ''}
                     onChange={(e) => this.setState({
                       values: { ...values, [k]: e.target.value } })} />

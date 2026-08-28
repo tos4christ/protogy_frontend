@@ -21,7 +21,7 @@ const NAV = [
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
   ['anomalies', 'DAR Anomalies', '⚠', 'admin'],
-  ['map', 'Eagle Eye', '◎'],
+  ['map', 'Eagle Eye', '◎', 'admin'],
   ['status', 'Feeder Status', '≣'],
   ['explorer', 'Feeder Explorer', '⌕'],
   ['onboard', 'Onboard Meter', '⊕', 'admin'],

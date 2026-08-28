@@ -104,7 +104,7 @@ class App extends React.Component {
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}
             {tab === 'anomalies' && session.role === 'admin' && <DarAnomalies />}
-            {tab === 'map' && <MapView />}
+            {tab === 'map' && session.role === 'admin' && <MapView />}
             {tab === 'status' && <StatusBoard />}
             {tab === 'explorer' &&
               <MeterExplorer meters={meters} isAdmin={session.role === 'admin'}

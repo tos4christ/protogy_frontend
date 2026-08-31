@@ -141,7 +141,7 @@ class MapView extends React.Component {
                       </b><br /></span>
                     )}
                     {m.voltage_l1 != null && (<span>
-                      V: {Number(m.voltage_l1).toFixed(1)} / {Number(m.voltage_l2).toFixed(1)} / {Number(m.voltage_l3).toFixed(1)}<br />
+                      V (kV): {Number(m.voltage_l1).toFixed(2)} / {Number(m.voltage_l2).toFixed(2)} / {Number(m.voltage_l3).toFixed(2)}<br />
                       P: {m.active_power != null ? Number(m.active_power).toFixed(1) : '—'} ·
                       f: {m.frequency != null ? Number(m.frequency).toFixed(2) + ' Hz' : '—'}<br />
                     </span>)}

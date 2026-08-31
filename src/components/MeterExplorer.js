@@ -230,7 +230,7 @@ class MeterExplorer extends React.Component {
         </div>
 
         <div className="card">
-          <h2>Voltage (V) — {r.series.date}</h2>
+          <h2>Voltage (kV) — {r.series.date}</h2>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={seriesData}>
               <CartesianGrid strokeDasharray="3 3" />

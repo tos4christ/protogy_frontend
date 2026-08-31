@@ -6,7 +6,7 @@ const LABELS = {
   compliance_met_pct: 'Compliance "Met" threshold (%) — current uptime/24h at/above this',
   voltage_tolerance_pct: 'Voltage tolerance (±% of nominal) for voltage compliance',
   current_flow_threshold: 'Current flowing threshold (Amps)',
-  voltage_present_threshold: 'Voltage present threshold (Volts)',
+  voltage_present_threshold: 'Voltage present threshold (kV) — e.g. 0.05 kV = 50V',
 };
 const SBT_HOURS_LABELS = {
   sbt_hours_band_a: 'Band A minimum daily supply hours',

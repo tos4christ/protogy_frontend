@@ -22,7 +22,7 @@ function minutesAgo(ts) {
 // columns carry the unit per-row instead of a single fixed header unit.
 const PHASE = { 1: 'ph-r', 2: 'ph-y', 3: 'ph-b' };
 const NUM_COLS = [
-  ['voltage_l1', 1, 'V L1 (V)', PHASE[1]], ['voltage_l2', 1, 'V L2 (V)', PHASE[2]], ['voltage_l3', 1, 'V L3 (V)', PHASE[3]],
+  ['voltage_l1', 1, 'V L1 (kV)', PHASE[1]], ['voltage_l2', 1, 'V L2 (kV)', PHASE[2]], ['voltage_l3', 1, 'V L3 (kV)', PHASE[3]],
   ['current_l1', 2, 'I L1 (A)', PHASE[1]], ['current_l2', 2, 'I L2 (A)', PHASE[2]], ['current_l3', 2, 'I L3 (A)', PHASE[3]],
   ['active_power', 1, 'Active Pwr', null, 'power_unit'],
   ['reactive_power', 1, 'Reactive Pwr', null, 'power_unit'],

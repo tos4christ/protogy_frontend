@@ -6,6 +6,8 @@ import {
 import api from '../api';
 
 const darColor = (pct) => (pct >= 95 ? '#2f9e44' : pct >= 80 ? '#e8a80c' : '#d64545');
+const pfColor = (pf) => (pf >= 0.95 ? '#2f9e44' : pf >= 0.85 ? '#e8a80c' : '#d64545');
+const imbalanceColor = (pct) => (pct < 10 ? '#2f9e44' : pct < 25 ? '#e8a80c' : '#d64545');
 const n1 = (v, dp = 1) => (v == null ? '—' : Number(v).toFixed(dp));
 const PAGE_SIZES = [25, 50, 100, 250];
 
@@ -19,14 +21,17 @@ class Dashboard extends React.Component {
     this.state = {
       data: null, error: null, disco: 'all', band: 'all', discos: [],
       page: 1, limit: 50, groupByBand: false, zoom: 60,
+      pq: null, pqError: null,
     };
     this.load = this.load.bind(this);
+    this.loadPq = this.loadPq.bind(this);
   }
 
   componentDidMount() {
     api.listDiscos().then((discos) => this.setState({ discos })).catch(() => {});
     this.load();
-    this.timer = setInterval(() => { if (!document.hidden) this.load(); }, 60000);
+    this.loadPq();
+    this.timer = setInterval(() => { if (!document.hidden) { this.load(); this.loadPq(); } }, 30000);
   }
   componentWillUnmount() { clearInterval(this.timer); }
 
@@ -37,10 +42,17 @@ class Dashboard extends React.Component {
       .catch((e) => this.setState({ error: e.message }));
   }
 
+  loadPq() {
+    const { disco, band } = this.state;
+    api.powerQuality(disco, band)
+      .then((pq) => this.setState({ pq, pqError: null }))
+      .catch((e) => this.setState({ pqError: e.message }));
+  }
+
   setFilter(patch) {
     // Any filter change resets to page 1 — a stale page number on a
     // narrower/wider result set would otherwise show the wrong slice.
-    this.setState({ ...patch, page: 1 }, this.load);
+    this.setState({ ...patch, page: 1 }, () => { this.load(); this.loadPq(); });
   }
 
   render() {
@@ -235,7 +247,110 @@ class Dashboard extends React.Component {
             </PieChart>
           </ResponsiveContainer>
         </div>
+
+        {this.renderPowerQuality()}
       </React.Fragment>
+    );
+  }
+
+  renderPowerQuality() {
+    const { pq, pqError } = this.state;
+    if (pqError) return <div className="card"><div className="error">{pqError}</div></div>;
+    if (!pq) return <div className="card">Loading power quality analytics…</div>;
+
+    const pfChartData = pq.pf.buckets.map((b) => ({ name: b.range, count: b.count }));
+    const bucketColors = ['#d64545', '#e8a80c', '#8fc93a', '#2f9e44'];
+
+    return (
+      <div className="card">
+        <h2>Power Quality Analytics <span className="live-dot" title="Live, refreshes every 30s"></span></h2>
+        <p className="muted" style={{ marginTop: 0 }}>
+          Computed live from each online feeder's latest reading ({pq.feedersAnalyzed} feeders
+          analyzed). Distinct from connectivity or DAR — a feeder can be perfectly "online" and
+          still be running an inefficient or unbalanced load.
+        </p>
+        <div className="stat-grid">
+          <div className="stat">
+            <div className="v" style={{ color: pq.pf.avgPf != null ? pfColor(pq.pf.avgPf) : undefined }}>
+              {pq.pf.avgPf != null ? pq.pf.avgPf : '—'}
+            </div>
+            <div className="l">Fleet avg power factor</div>
+          </div>
+          <div className="stat">
+            <div className="v" style={{ color: '#d64545' }}>{pq.pf.poor.length}</div>
+            <div className="l">Feeders with poor PF (&lt; {pq.pfThreshold})</div>
+          </div>
+          <div className="stat">
+            <div className="v" style={{ color: pq.imbalance.avgImbalancePct != null ? imbalanceColor(pq.imbalance.avgImbalancePct) : undefined }}>
+              {pq.imbalance.avgImbalancePct != null ? pq.imbalance.avgImbalancePct + '%' : '—'}
+            </div>
+            <div className="l">Fleet avg phase imbalance</div>
+          </div>
+          <div className="stat">
+            <div className="v" style={{ color: '#d64545' }}>{pq.imbalance.worst.length}</div>
+            <div className="l">Feeders unbalanced (≥ {pq.imbalanceThreshold}%)</div>
+          </div>
+        </div>
+
+        <h3 style={{ marginTop: 20 }}>Power Factor Distribution (live)</h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={pfChartData} margin={{ top: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar isAnimationActive={false} dataKey="count" name="Feeders">
+              <LabelList dataKey="count" position="top" style={{ fontSize: 11, fontWeight: 700, fill: '#223344' }} />
+              {pfChartData.map((_, i) => <Cell key={i} fill={bucketColors[i] || '#1653a1'} />)}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+
+        <div className="controls" style={{ marginTop: 16 }}>
+          <h3 style={{ margin: 0 }}>Worst Power Factor</h3>
+        </div>
+        <div className="table-wrap">
+          <table className="data compact">
+            <thead>
+              <tr><th>Feeder</th><th>Disco</th><th>Band</th><th>Power Factor</th></tr>
+            </thead>
+            <tbody>
+              {pq.pf.poor.map((f) => (
+                <tr key={f.meterId}>
+                  <td>{f.feeder}</td><td>{f.disco || '—'}</td><td>{f.band || '—'}</td>
+                  <td style={{ color: pfColor(f.powerFactor), fontWeight: 700 }}>{f.powerFactor}</td>
+                </tr>
+              ))}
+              {pq.pf.poor.length === 0 &&
+                <tr><td colSpan="4" className="muted">No feeders below the poor-PF threshold right now.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style={{ marginTop: 20 }}>Worst Phase Current Imbalance</h3>
+        <div className="table-wrap">
+          <table className="data compact">
+            <thead>
+              <tr><th>Feeder</th><th>Disco</th><th>Band</th><th>I L1 (A)</th><th>I L2 (A)</th><th>I L3 (A)</th><th>Imbalance</th></tr>
+            </thead>
+            <tbody>
+              {pq.imbalance.worst.map((f) => (
+                <tr key={f.meterId}>
+                  <td>{f.feeder}</td><td>{f.disco || '—'}</td><td>{f.band || '—'}</td>
+                  <td>{f.current_l1.toFixed(1)}</td><td>{f.current_l2.toFixed(1)}</td><td>{f.current_l3.toFixed(1)}</td>
+                  <td style={{ color: imbalanceColor(f.imbalancePct), fontWeight: 700 }}>{f.imbalancePct}%</td>
+                </tr>
+              ))}
+              {pq.imbalance.worst.length === 0 &&
+                <tr><td colSpan="7" className="muted">No feeders above the imbalance threshold right now.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <p className="muted">Phase imbalance is the most-loaded phase's deviation from the
+          3-phase average, as a percentage. Sustained imbalance above ~10% typically indicates
+          an unevenly distributed single-phase load or a wiring/connection fault, and can
+          accelerate transformer heating over time. Thresholds are configurable in Settings.</p>
+      </div>
     );
   }
 }

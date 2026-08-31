@@ -32,6 +32,10 @@ const ANOMALY_LABELS = {
   anomaly_jump_pp: 'Day-over-day DAR jump (percentage points) before "suspicious jump" flag',
   anomaly_flatline_days: 'Consecutive identical DAR values before "flatline" flag',
 };
+const PQ_LABELS = {
+  pf_poor_threshold: 'Power factor below this counts as "poor" (0–1, e.g. 0.85)',
+  current_imbalance_pct_threshold: 'Phase current imbalance (%) above this is flagged',
+};
 
 // Platform settings (admin): thresholds used by the NERC view and reports.
 class Settings extends React.Component {
@@ -112,6 +116,19 @@ class Settings extends React.Component {
               {Object.keys(ANOMALY_LABELS).map((k) => (
                 <label key={k}>{ANOMALY_LABELS[k]}
                   <input type="number" step="1" min="1" value={values[k] ?? ''}
+                    onChange={(e) => this.setState({
+                      values: { ...values, [k]: e.target.value } })} />
+                </label>
+              ))}
+
+              <h3 className="sub-h">Power Quality Analytics thresholds</h3>
+              <p className="muted" style={{ marginTop: 0 }}>Used by the Dashboard's Power Quality
+                section to flag inefficient loads (poor power factor) and unbalanced phase
+                loading, both real-time indicators distinct from simple online/offline status.</p>
+              {Object.keys(PQ_LABELS).map((k) => (
+                <label key={k}>{PQ_LABELS[k]}
+                  <input type="number" step={k === 'pf_poor_threshold' ? '0.01' : '1'} min="0"
+                    value={values[k] ?? ''}
                     onChange={(e) => this.setState({
                       values: { ...values, [k]: e.target.value } })} />
                 </label>

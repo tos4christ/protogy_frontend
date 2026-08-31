@@ -157,6 +157,12 @@ const api = {
     if (limit) qs.push(`limit=${limit}`);
     return j(`/dashboard/overview${qs.length ? `?${qs.join('&')}` : ''}`);
   },
+  powerQuality: (disco, band) => {
+    const qs = [];
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    return j(`/dashboard/power-quality${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
   series: (id, date) => j(`/meters/${encodeURIComponent(id)}/series?date=${date}`),
   setMeterStatus: (id, status) => j(`/meters/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',

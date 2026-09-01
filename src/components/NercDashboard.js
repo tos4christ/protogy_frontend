@@ -126,8 +126,8 @@ class NercDashboard extends React.Component {
               <table className="data">
                 <thead>
                   <tr><th>Disco</th><th>Feeders</th>
-                    <th>Compliant (%) {table.date}</th>
-                    <th>Compliant (%) prev day</th>
+                    <th>Compliance (%) {table.date}</th>
+                    <th>Compliance (%) prev day</th>
                     <th>2-Day Non-Compliance</th><th>7-Day MA (%)</th></tr>
                 </thead>
                 <tbody>

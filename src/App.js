@@ -15,13 +15,30 @@ import Clock from './components/Clock';
 import CustomerPortal from './components/CustomerPortal';
 import api, { setUnauthorizedHandler } from './api';
 
+const THEME_KEY = 'protogy_theme';
+function getInitialTheme() {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  // No explicit choice yet — respect the OS/browser preference.
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark' : 'light';
+}
+function ThemeToggle({ theme, onToggle }) {
+  return (
+    <button className="theme-toggle" onClick={onToggle}
+      title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+      {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+    </button>
+  );
+}
+
 const NAV = [
   ['dashboard', 'Dashboard', '▦'],
   ['nerc', 'NERC View', '◈'],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
   ['anomalies', 'DAR Anomalies', '⚠', 'admin'],
-  ['map', 'Eagle Eye', '◎', 'admin'],
+  ['map', 'Eagle Eye', '◎'],
   ['status', 'Feeder Status', '≣'],
   ['explorer', 'Feeder Explorer', '⌕'],
   ['onboard', 'Onboard Meter', '⊕', 'admin'],
@@ -32,10 +49,14 @@ const NAV = [
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { session: api.session(), tab: 'dashboard', meters: [], error: null, navCollapsed: false };
+    this.state = {
+      session: api.session(), tab: 'dashboard', meters: [], error: null,
+      navCollapsed: false, theme: getInitialTheme(),
+    };
     this.loadMeters = this.loadMeters.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
+    this.toggleTheme = this.toggleTheme.bind(this);
   }
 
   componentDidMount() {
@@ -45,6 +66,14 @@ class App extends React.Component {
       this.setState({ session: null });
     });
     if (this.state.session) this.loadMeters();
+    document.documentElement.setAttribute('data-theme', this.state.theme);
+  }
+
+  toggleTheme() {
+    const theme = this.state.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    this.setState({ theme });
   }
 
   handleLogin(session) { this.setState({ session, error: null }, this.loadMeters); }
@@ -95,7 +124,10 @@ class App extends React.Component {
             <button className="nav-toggle" title="Show / hide menu"
               onClick={() => this.setState({ navCollapsed: !this.state.navCollapsed })}>☰</button>
             <h1>{(items.find(([k]) => k === tab) || [,''])[1]}</h1>
-            <Clock />
+            <div className="topbar-right">
+              <ThemeToggle theme={this.state.theme} onToggle={this.toggleTheme} />
+              <Clock />
+            </div>
           </header>
           <main className="page">
             {error && <div className="error">{error}</div>}
@@ -104,7 +136,7 @@ class App extends React.Component {
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}
             {tab === 'anomalies' && session.role === 'admin' && <DarAnomalies />}
-            {tab === 'map' && session.role === 'admin' && <MapView />}
+            {tab === 'map' && <MapView />}
             {tab === 'status' && <StatusBoard />}
             {tab === 'explorer' &&
               <MeterExplorer meters={meters} isAdmin={session.role === 'admin'}

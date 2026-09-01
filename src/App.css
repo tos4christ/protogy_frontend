@@ -7,7 +7,41 @@
   --blue: #7ec8e3; --red: #e8452c;
   --bg: #eef2f6; --card: #ffffff; --ink: #223344; --mut: #5a6b7a;
   --line: #e2e9f0; --green: #2f9e44; --amber: #e8a80c; --bad: #d64545;
+  /* Text/accent colour for headings and key numbers on card surfaces.
+     Kept separate from --navy (which also serves as a fixed background
+     accent, e.g. table headers) so dark mode can flip this to a light
+     colour without breaking navy's use as a background elsewhere. */
+  --heading: #0b3d61;
+  --input-bg: #fbfdfe; --input-border: #c8d5e0;
+  --btn-secondary-bg: #e8eff5;
+  --row-alt: #f6f9fc; --row-hover: #eaf5fb;
+  --stat-grad-1: #f7fafc; --stat-grad-2: #eef4f9;
+  --error-bg: #fde2e1; --error-fg: #b02a37;
+  --table-border: #cdd8e2; --table-border-strong: #33506b;
+  --dar-track: #e4ebf1;
+  --shadow-1: rgba(10,36,56,.07); --shadow-2: rgba(10,36,56,.18);
 }
+
+/* ---------- Dark theme ----------
+   Same variable set, dark-appropriate values. Applied via
+   <html data-theme="dark">, toggled by the button in the top bar and
+   persisted to localStorage (see ThemeToggle in App.js). --navy/--navy-2/
+   --navy-3 (the sidebar's own colours) are intentionally left unchanged —
+   the navigation rail stays a consistent dark brand colour in both themes. */
+:root[data-theme="dark"] {
+  --bg: #0f1720; --card: #182634; --ink: #dbe6ee; --mut: #90a4b7;
+  --line: #2b3b4c;
+  --heading: #7ec8e3;
+  --input-bg: #101b26; --input-border: #33465a;
+  --btn-secondary-bg: #22364a;
+  --row-alt: #1e2e3d; --row-hover: #24384a;
+  --stat-grad-1: #1c2b3a; --stat-grad-2: #16232f;
+  --error-bg: #4a2020; --error-fg: #ff8a80;
+  --table-border: #33465a; --table-border-strong: #4a6178;
+  --dar-track: #26374a;
+  --shadow-1: rgba(0,0,0,.35); --shadow-2: rgba(0,0,0,.45);
+}
+
 body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--ink); }
 
 /* ---------- Shell: sidebar + main ---------- */
@@ -45,11 +79,12 @@ body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
   background: var(--card); padding: 12px 26px; border-bottom: 1px solid var(--line);
-  position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 4px rgba(10,36,56,.06);
+  position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 4px var(--shadow-1);
 }
-.topbar h1 { margin: 0; font-size: 20px; color: var(--navy); font-weight: 700; }
+.topbar h1 { margin: 0; font-size: 20px; color: var(--heading); font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
 .header-clock { text-align: right; line-height: 1.15; }
-.clock-time { font-size: 18px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
+.clock-time { font-size: 18px; font-weight: 700; color: var(--heading); font-variant-numeric: tabular-nums; }
 .clock-date { font-size: 11px; color: var(--mut); }
 
 .page { padding: 22px 26px; max-width: 1280px; width: 100%; }
@@ -57,16 +92,16 @@ body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--
 /* ---------- Cards ---------- */
 .card {
   background: var(--card); border-radius: 12px; padding: 20px 22px; margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(10,36,56,.07); border: 1px solid var(--line);
+  box-shadow: 0 2px 10px var(--shadow-1); border: 1px solid var(--line);
 }
-.card h2 { margin: 0 0 12px; font-size: 16px; color: var(--navy); letter-spacing: .2px; }
+.card h2 { margin: 0 0 12px; font-size: 16px; color: var(--heading); letter-spacing: .2px; }
 
 /* ---------- Controls ---------- */
 .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 14px; }
 .controls label { display: flex; flex-direction: column; font-size: 12px; color: var(--mut); gap: 5px; font-weight: 600; }
 .controls input, .controls select {
-  padding: 9px 11px; border: 1px solid #c8d5e0; border-radius: 8px; font-size: 14px;
-  min-width: 150px; background: #fbfdfe; font-family: inherit;
+  padding: 9px 11px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 14px;
+  min-width: 150px; background: var(--input-bg); color: var(--ink); font-family: inherit;
 }
 .controls input:focus, .controls select:focus { outline: 2px solid rgba(126,200,227,.55); border-color: var(--blue); }
 .btn {
@@ -76,7 +111,15 @@ body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--
 }
 .btn:hover { filter: brightness(1.12); }
 .btn:disabled { background: #9bb7c9; box-shadow: none; cursor: not-allowed; }
-.btn.secondary { background: #e8eff5; color: var(--navy); box-shadow: none; }
+.btn.secondary { background: var(--btn-secondary-bg); color: var(--heading); box-shadow: none; }
+
+/* ---------- Theme toggle ---------- */
+.theme-toggle {
+  background: none; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 13px; padding: 7px 12px; cursor: pointer; color: var(--heading);
+  font-family: inherit; display: flex; align-items: center; gap: 6px;
+}
+.theme-toggle:hover { background: var(--row-hover); }
 
 /* ---------- Tables ---------- */
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -85,8 +128,8 @@ table.data th {
   background: var(--navy); color: #fff; position: sticky; top: 0; z-index: 2;
   font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px;
 }
-table.data tbody tr:nth-child(even) { background: #f6f9fc; }
-table.data tbody tr:hover { background: #eaf5fb; }
+table.data tbody tr:nth-child(even) { background: var(--row-alt); }
+table.data tbody tr:hover { background: var(--row-hover); }
 table.data td:first-child, table.data th:first-child { text-align: left; }
 .table-wrap { overflow-x: auto; max-height: 560px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--line); }
 .table-wrap table.data.wide { min-width: 1650px; }
@@ -100,17 +143,17 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 .badge.active { background: #d9f2e0; color: #157347; }
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
 .stat {
-  background: linear-gradient(180deg, #f7fafc, #eef4f9); border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--stat-grad-1), var(--stat-grad-2)); border: 1px solid var(--line);
   border-radius: 10px; padding: 16px;
 }
-.stat .v { font-size: 24px; font-weight: 800; color: var(--navy); }
+.stat .v { font-size: 24px; font-weight: 800; color: var(--heading); }
 .stat .l { font-size: 12px; color: var(--mut); margin-top: 4px; }
 
 /* ---------- Misc ---------- */
-.error { background: #fde2e1; color: #b02a37; padding: 11px 15px; border-radius: 8px; margin-bottom: 12px; }
+.error { background: var(--error-bg); color: var(--error-fg); padding: 11px 15px; border-radius: 8px; margin-bottom: 12px; }
 .pager { display: flex; gap: 10px; align-items: center; margin-top: 12px; font-size: 14px; flex-wrap: wrap; }
-.muted { color: #71808e; font-size: 13px; }
-.dar-bar { background: #e4ebf1; border-radius: 4px; height: 14px; width: 140px; display: inline-block; vertical-align: middle; }
+.muted { color: var(--mut); font-size: 13px; }
+.dar-bar { background: var(--dar-track); border-radius: 4px; height: 14px; width: 140px; display: inline-block; vertical-align: middle; }
 .dar-bar > div { height: 100%; border-radius: 4px; background: var(--green); }
 .dar-bar > div.warn { background: var(--amber); }
 .dar-bar > div.bad { background: var(--bad); }
@@ -137,20 +180,20 @@ tr.row-live td { animation: rowFlash 1.2s ease-out; }
 .login-card, .card[style] { }
 
 /* ================= CUSTOMER PORTAL (prepaid) ================= */
-.cust-tabs { display: flex; background: #fff; border-bottom: 1px solid var(--line);
+.cust-tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--line);
   position: sticky; top: 0; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
 .cust-tabs button { flex: 1; border: none; background: none; padding: 13px 4px; font-size: 14px;
   font-family: inherit; color: #55707f; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
-.cust-tabs button.active { color: var(--navy); font-weight: 700; border-bottom-color: var(--red); background: #eaf5fb; }
+.cust-tabs button.active { color: var(--heading); font-weight: 700; border-bottom-color: var(--red); background: var(--row-hover); }
 .cust-page { max-width: 640px; margin: 0 auto; padding: 14px 12px; }
 .cust-login { max-width: 400px; margin: 40px auto; }
 .cust-login .controls label { width: 100%; }
 .cust-login .controls input { width: 100%; font-size: 16px; }
 .cust-login .btn { width: 100%; padding: 12px; font-size: 15px; }
 .vend-token { font-family: Consolas, 'Courier New', monospace; font-weight: 700; font-size: 15px;
-  letter-spacing: 1px; color: var(--navy); word-break: break-all; }
+  letter-spacing: 1px; color: var(--heading); word-break: break-all; }
 /* customer portal header (uses app-header class) */
-.app-header { background: #fff; color: var(--navy); border-bottom: 3px solid var(--blue);
+.app-header { background: var(--card); color: var(--heading); border-bottom: 3px solid var(--blue);
   box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; align-items: center; gap: 20px; padding: 12px 20px; }
 .brand-logo { height: 42px; }
 
@@ -210,7 +253,7 @@ table.data th.ph-b { background: #1653a1; }
 
 /* Collapsible sidebar (item 6) */
 .nav-toggle { background: none; border: 1px solid var(--line); border-radius: 8px;
-  font-size: 18px; padding: 4px 12px; margin-right: 14px; cursor: pointer; color: var(--navy); }
+  font-size: 18px; padding: 4px 12px; margin-right: 14px; cursor: pointer; color: var(--heading); }
 .shell.nav-collapsed .sidebar { display: none; }
 
 /* ============================================================
@@ -226,9 +269,9 @@ table.data th.ph-b { background: #1653a1; }
 .status-dense table.data td {
   font-size: var(--fs-font);
   padding: var(--fs-pad-y) var(--fs-pad-x);
-  border: 1px solid #cdd8e2;       /* full grid borders for readability */
+  border: 1px solid var(--table-border);       /* full grid borders for readability */
 }
-.status-dense table.data th { border-color: #33506b; }
+.status-dense table.data th { border-color: var(--table-border-strong); }
 .status-dense .table-wrap { max-height: calc(100vh - 250px); }
 .status-dense table.data.wide { min-width: 1500px; }
 .status-dense .badge { padding: 1px 8px; font-size: 10.5px; }
@@ -238,9 +281,9 @@ table.data th.ph-b { background: #1653a1; }
    and live-power tables, StatusBoard's feeder grid), plus tighter control
    rows so filter/pagination bars read like a SCADA toolbar. */
 table.data.compact th, table.data.compact td {
-  font-size: 12px; padding: 4px 7px; border: 1px solid #cdd8e2;
+  font-size: 12px; padding: 4px 7px; border: 1px solid var(--table-border);
 }
-table.data.compact th { border-color: #33506b; }
+table.data.compact th { border-color: var(--table-border-strong); }
 .card.scada { padding: 14px 16px; }
 .card.scada h2 { margin-bottom: 8px; font-size: 15px; }
 .compact-controls { gap: 8px; row-gap: 6px; }
@@ -248,13 +291,13 @@ table.data.compact th { border-color: #33506b; }
 .compact-controls select, .compact-controls input { padding: 3px 6px; font-size: 12.5px; }
 .compact-controls .btn { padding: 3px 10px; font-size: 12px; }
 
-.sub-h { font-size: 13.5px; color: var(--navy); margin: 14px 0 8px; }
+.sub-h { font-size: 13.5px; color: var(--heading); margin: 14px 0 8px; }
 
 /* ============================================================ */
 /* Guided Tour (onboarding walkthrough) */
 .tour-card {
   box-shadow: 0 12px 32px rgba(15,23,35,0.35);
-  border: 1px solid #e1e8ef;
+  border: 1px solid var(--line);
 }
 .tour-step-count {
   font-size: 12px;
@@ -263,6 +306,22 @@ table.data.compact th { border-color: #33506b; }
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-.tour-card h3 { margin: 4px 0 8px; font-size: 16px; color: var(--navy, #162842); }
-.tour-card p { font-size: 14px; line-height: 1.5; color: #33475a; margin: 0; }
+.tour-card h3 { margin: 4px 0 8px; font-size: 16px; color: var(--heading); }
+.tour-card p { font-size: 14px; line-height: 1.5; color: var(--ink); margin: 0; }
 .tour-restart-btn { font-size: 12px; padding: 5px 12px; float: right; }
+
+/* ============================================================ */
+/* Dark-mode support for Recharts (SVG charts render via JS, so they
+   don't pick up CSS variables directly — these overrides target the
+   library's own generated class names instead). */
+[data-theme="dark"] .recharts-cartesian-grid-horizontal line,
+[data-theme="dark"] .recharts-cartesian-grid-vertical line { stroke: var(--line); }
+[data-theme="dark"] .recharts-text,
+[data-theme="dark"] .recharts-cartesian-axis-tick-value tspan,
+[data-theme="dark"] .recharts-polar-angle-axis-tick-value tspan { fill: var(--mut); }
+[data-theme="dark"] .recharts-legend-item-text { color: var(--ink) !important; }
+[data-theme="dark"] .recharts-default-tooltip {
+  background: var(--card) !important; border-color: var(--line) !important; color: var(--ink) !important;
+}
+[data-theme="dark"] .recharts-tooltip-label { color: var(--ink) !important; }
+[data-theme="dark"] .recharts-tooltip-item { color: var(--ink) !important; }

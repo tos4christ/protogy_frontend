@@ -4,6 +4,8 @@ import {
   Tooltip, CartesianGrid, Legend, Cell,
 } from 'recharts';
 import api from '../api';
+import GuidedTour, { TourRestartButton } from './GuidedTour';
+import { explorerTour } from '../tours';
 
 function hms(totalSeconds) {
   const s = Math.max(0, Math.round(+totalSeconds || 0));
@@ -34,6 +36,7 @@ class MeterExplorer extends React.Component {
     this.load = this.load.bind(this);
     this.handleToggleStatus = this.handleToggleStatus.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.tourRef = React.createRef();
   }
 
   componentDidMount() {
@@ -129,7 +132,7 @@ class MeterExplorer extends React.Component {
             {discos.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         </label>
-        <label>Feeder
+        <label data-tour="exp-feeder-select">Feeder
           <select value={s.meterId}
             onChange={(e) => this.set({ meterId: e.target.value, page: 1, result: null })}>
             {meters.map((m) => (
@@ -139,7 +142,7 @@ class MeterExplorer extends React.Component {
             ))}
           </select>
         </label>
-        <label>View
+        <label data-tour="exp-view-tabs">View
           <select value={s.view}
             onChange={(e) => this.set({ view: e.target.value, page: 1, result: null })}>
             <option value="charts">Charts (DAR trend + electrical)</option>
@@ -152,19 +155,19 @@ class MeterExplorer extends React.Component {
           </select>
         </label>
         {needsDate && (
-          <label>Date
+          <label data-tour="exp-date-controls">Date
             <input type="date" value={s.date} onChange={(e) => this.set({ date: e.target.value, page: 1 })} />
           </label>
         )}
         {needsRange && (
-          <React.Fragment>
+          <span data-tour="exp-date-controls" style={{ display: 'contents' }}>
             <label>From
               <input type="date" value={s.from} onChange={(e) => this.set({ from: e.target.value })} />
             </label>
             <label>To{s.view === 'charts' ? ' (also the snapshot date)' : ''}
               <input type="date" value={s.to} onChange={(e) => this.set({ to: e.target.value })} />
             </label>
-          </React.Fragment>
+          </span>
         )}
         {s.view === 'data' && (
           <label>Order
@@ -432,8 +435,9 @@ class MeterExplorer extends React.Component {
     const { view, error, notice, meterId } = this.state;
     return (
       <div>
+        <GuidedTour ref={this.tourRef} tourId="explorer" steps={explorerTour} autoStart />
         <div className="card">
-          <h2>Feeder Explorer</h2>
+          <h2>Feeder Explorer <TourRestartButton onClick={() => this.tourRef.current.start()} label="" /></h2>
           {this.props.meters.length === 0 && (
             <p className="muted">No meters onboarded yet — use the Onboard Meter tab,
               or start a device streaming and it will appear automatically.</p>
@@ -441,14 +445,16 @@ class MeterExplorer extends React.Component {
           {this.renderControls()}
           {error && <div className="error">{error}</div>}
           {notice && <div className="card" style={{ background: '#eef8f0' }}>{notice}</div>}
-          {meterId && view === 'data' && this.renderData()}
-          {meterId && view === 'dar' && this.renderDar()}
-          {meterId && view === 'uptime' && this.renderUptime()}
-          {meterId && view === 'gaps' && this.renderGaps()}
-          {meterId && view === 'details' && this.renderDetails()}
-          {view === 'download' && (
-            <p className="muted">Choose the date range above and click Download CSV.</p>
-          )}
+          <div data-tour="exp-content" style={{ minHeight: 40 }}>
+            {meterId && view === 'data' && this.renderData()}
+            {meterId && view === 'dar' && this.renderDar()}
+            {meterId && view === 'uptime' && this.renderUptime()}
+            {meterId && view === 'gaps' && this.renderGaps()}
+            {meterId && view === 'details' && this.renderDetails()}
+            {view === 'download' && (
+              <p className="muted">Choose the date range above and click Download CSV.</p>
+            )}
+          </div>
         </div>
         {meterId && view === 'charts' && this.state.result && this.renderCharts()}
       </div>

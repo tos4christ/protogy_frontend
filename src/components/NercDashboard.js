@@ -1,5 +1,7 @@
 import React from 'react';
 import api from '../api';
+import GuidedTour, { TourRestartButton } from './GuidedTour';
+import { nercTour } from '../tours';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -25,6 +27,7 @@ class NercDashboard extends React.Component {
       feeders: null,
     };
     this.load = this.load.bind(this);
+    this.tourRef = React.createRef();
   }
 
   componentDidMount() {
@@ -63,9 +66,10 @@ class NercDashboard extends React.Component {
     const { s, table, discos, disco, band, date, month, from, to, error } = this.state;
     return (
       <div>
+        <GuidedTour ref={this.tourRef} tourId="nerc" steps={nercTour} autoStart />
         {error && <div className="error">{error}</div>}
         <div className="card">
-          <div className="controls">
+          <div className="controls" data-tour="nerc-filters">
             <label>Disco
               <select value={disco}
                 onChange={(e) => this.setState({ disco: e.target.value }, this.load)}>
@@ -80,12 +84,13 @@ class NercDashboard extends React.Component {
                 {['A', 'B', 'C', 'D', 'E'].map((b) => <option key={b} value={b}>Band {b}</option>)}
               </select>
             </label>
-            {s && <span className="muted" style={{ marginLeft: 'auto' }}>
+            <TourRestartButton onClick={() => this.tourRef.current.start()} label="" />
+            {s && <span className="muted" style={{ marginLeft: 8 }}>
               DAR compliance ≥ {s.thresholds.dar_compliance_pct}% · voltage band ±{s.thresholds.voltage_tolerance_pct}%
               &nbsp;(change in Settings)</span>}
           </div>
           {s && (
-            <div className="nerc-grid">
+            <div className="nerc-grid" data-tour="nerc-tiles">
               <Tile tone="good" value={s.currentOnlineFeeders} label="Current Online Feeders"
                 sub={`of ${s.totalFeeders}`} />
               <Tile tone="good" value={s.compliantFeeders} label="Compliant Feeders (today)" />
@@ -104,7 +109,7 @@ class NercDashboard extends React.Component {
           )}
         </div>
 
-        <div className="card">
+        <div className="card" data-tour="nerc-summary-table">
           <h2>Executive Summary by Disco</h2>
           <div className="controls">
             <label>Date
@@ -121,8 +126,8 @@ class NercDashboard extends React.Component {
               <table className="data">
                 <thead>
                   <tr><th>Disco</th><th>Feeders</th>
-                    <th>Compliance (%) {table.date}</th>
-                    <th>Compliance (%) prev day</th>
+                    <th>Compliant (%) {table.date}</th>
+                    <th>Compliant (%) prev day</th>
                     <th>2-Day Non-Compliance</th><th>7-Day MA (%)</th></tr>
                 </thead>
                 <tbody>
@@ -175,7 +180,7 @@ class NercDashboard extends React.Component {
           </div>
         )}
 
-        <div className="card">
+        <div className="card" data-tour="nerc-reports">
           <h2>Regulator Reports (Excel)</h2>
           <p className="muted" style={{ marginTop: 0 }}>
             Reports export for: <b>{disco === 'all' ? 'All DisCos' : disco}</b>

@@ -249,3 +249,20 @@ table.data.compact th { border-color: #33506b; }
 .compact-controls .btn { padding: 3px 10px; font-size: 12px; }
 
 .sub-h { font-size: 13.5px; color: var(--navy); margin: 14px 0 8px; }
+
+/* ============================================================ */
+/* Guided Tour (onboarding walkthrough) */
+.tour-card {
+  box-shadow: 0 12px 32px rgba(15,23,35,0.35);
+  border: 1px solid #e1e8ef;
+}
+.tour-step-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f9eff;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.tour-card h3 { margin: 4px 0 8px; font-size: 16px; color: var(--navy, #162842); }
+.tour-card p { font-size: 14px; line-height: 1.5; color: #33475a; margin: 0; }
+.tour-restart-btn { font-size: 12px; padding: 5px 12px; float: right; }

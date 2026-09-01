@@ -4,6 +4,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Legend,
 } from 'recharts';
 import api from '../api';
+import GuidedTour, { TourRestartButton } from './GuidedTour';
+import { dashboardTour } from '../tours';
 
 const darColor = (pct) => (pct >= 95 ? '#2f9e44' : pct >= 80 ? '#e8a80c' : '#d64545');
 const pfColor = (pf) => (pf >= 0.95 ? '#2f9e44' : pf >= 0.85 ? '#e8a80c' : '#d64545');
@@ -25,6 +27,7 @@ class Dashboard extends React.Component {
     };
     this.load = this.load.bind(this);
     this.loadPq = this.loadPq.bind(this);
+    this.tourRef = React.createRef();
   }
 
   componentDidMount() {
@@ -82,12 +85,14 @@ class Dashboard extends React.Component {
 
     return (
       <React.Fragment>
+        <GuidedTour ref={this.tourRef} tourId="dashboard" steps={dashboardTour} autoStart />
         <div className="card">
           <h2>Fleet Overview
             {disco !== 'all' && <span className="muted"> — {disco}</span>}
             {band !== 'all' && <span className="muted"> · Band {band}</span>}
+            <TourRestartButton onClick={() => this.tourRef.current.start()} label="" />
           </h2>
-          <div className="controls">
+          <div className="controls" data-tour="dash-filters">
             <label>Disco
               <select value={disco}
                 onChange={(e) => this.setFilter({ disco: e.target.value })}>
@@ -105,7 +110,7 @@ class Dashboard extends React.Component {
               </select>
             </label>
           </div>
-          <div className="stat-grid">
+          <div className="stat-grid" data-tour="dash-tiles">
             <div className="stat"><div className="v">{t.feeders}</div><div className="l">Feeders onboarded</div></div>
             <div className="stat"><div className="v" style={{ color: '#2f9e44' }}>{t.online}</div><div className="l">Online now</div></div>
             <div className="stat"><div className="v" style={{ color: '#d64545' }}>{t.offline}</div><div className="l">Offline</div></div>
@@ -117,6 +122,7 @@ class Dashboard extends React.Component {
           <div className="controls" style={{ marginBottom: groupByBand ? 8 : 0 }}>
             <h2 style={{ margin: 0 }}>Analysis by Band</h2>
             <button className={'btn ' + (groupByBand ? '' : 'secondary')} style={{ marginLeft: 'auto' }}
+              data-tour="dash-band-toggle"
               onClick={() => this.setState({ groupByBand: !groupByBand })}>
               {groupByBand ? 'Grouped by Band' : 'Group by Band'}
             </button>
@@ -155,7 +161,7 @@ class Dashboard extends React.Component {
           )}
         </div>
 
-        <div className="card">
+        <div className="card" data-tour="dash-live-power">
           <h2>Live Power, Reactive Power &amp; Frequency</h2>
           <div className="table-wrap" style={{ maxHeight: 320 }}>
             <table className="data compact">
@@ -184,7 +190,7 @@ class Dashboard extends React.Component {
 
         <div className="card">
           <h2>Today's D.A.R by Feeder</h2>
-          <div className="controls">
+          <div className="controls" data-tour="dash-dar-controls">
             <span className="muted">
               Showing {chartData.length ? (page - 1) * limit + 1 : 0}–{(page - 1) * limit + chartData.length} of {data.total}
             </span>
@@ -255,14 +261,14 @@ class Dashboard extends React.Component {
 
   renderPowerQuality() {
     const { pq, pqError } = this.state;
-    if (pqError) return <div className="card"><div className="error">{pqError}</div></div>;
-    if (!pq) return <div className="card">Loading power quality analytics…</div>;
+    if (pqError) return <div className="card" data-tour="dash-pq"><div className="error">{pqError}</div></div>;
+    if (!pq) return <div className="card" data-tour="dash-pq">Loading power quality analytics…</div>;
 
     const pfChartData = pq.pf.buckets.map((b) => ({ name: b.range, count: b.count }));
     const bucketColors = ['#d64545', '#e8a80c', '#8fc93a', '#2f9e44'];
 
     return (
-      <div className="card">
+      <div className="card" data-tour="dash-pq">
         <h2>Power Quality Analytics <span className="live-dot" title="Live, refreshes every 30s"></span></h2>
         <p className="muted" style={{ marginTop: 0 }}>
           Computed live from each online feeder's latest reading ({pq.feedersAnalyzed} feeders

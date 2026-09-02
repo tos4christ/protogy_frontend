@@ -106,7 +106,12 @@ class App extends React.Component {
                 onClick={() => this.setState({
                   tab: key,
                   // NERC item 6: auto-collapse the sidebar on Feeder Status
-                  navCollapsed: key === 'status' ? true : this.state.navCollapsed,
+                  // for the wide table, and auto-restore it when leaving —
+                  // previously this only ever collapsed and never came
+                  // back, silently hiding the whole nav menu (including
+                  // Sign Out) on every other screen for the rest of the
+                  // session.
+                  navCollapsed: key === 'status',
                 })}>
                 <span className="ico">{icon}</span>{label}
               </button>
@@ -127,6 +132,10 @@ class App extends React.Component {
             <div className="topbar-right">
               <ThemeToggle theme={this.state.theme} onToggle={this.toggleTheme} />
               <Clock />
+              <span className="topbar-user" title={`Signed in as ${session.username} (${session.role})`}>
+                {session.username}
+              </span>
+              <button className="btn secondary" onClick={this.handleLogout}>Sign out</button>
             </div>
           </header>
           <main className="page">

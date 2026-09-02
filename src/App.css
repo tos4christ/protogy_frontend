@@ -120,6 +120,7 @@ body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--
   font-family: inherit; display: flex; align-items: center; gap: 6px;
 }
 .theme-toggle:hover { background: var(--row-hover); }
+.topbar-user { font-size: 13px; color: var(--mut); font-weight: 600; white-space: nowrap; }
 
 /* ---------- Tables ---------- */
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -210,6 +211,9 @@ tr.row-live td { animation: rowFlash 1.2s ease-out; }
   .side-foot .btn { width: auto; }
   .topbar { padding: 10px 14px; }
   .topbar h1 { font-size: 16px; }
+  .topbar-right { gap: 8px; }
+  .topbar-user { display: none; } /* username shown in the sidebar footer on mobile instead */
+  .theme-toggle span, .theme-toggle { font-size: 12px; padding: 6px 9px; }
   .page { padding: 12px 10px; }
   .card { padding: 14px; }
   .controls label { flex: 1 1 45%; min-width: 130px; }

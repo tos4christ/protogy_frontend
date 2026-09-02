@@ -160,7 +160,11 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 .dar-bar > div.bad { background: var(--bad); }
 
 /* Real-time flash + live indicator */
-@keyframes rowFlash { from { background: #d5ecff; } to { background: transparent; } }
+/* Uses a translucent overlay (not a solid colour) so it tints whichever
+   row colour is already showing rather than replacing it — a solid light
+   blue here looked fine against dark text in light mode, but made light-
+   coloured dark-mode text unreadable against it. */
+@keyframes rowFlash { from { background: rgba(126,200,227,.4); } to { background: rgba(126,200,227,0); } }
 tr.row-live td { animation: rowFlash 1.2s ease-out; }
 .live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
   background: var(--green); margin-left: 6px; vertical-align: middle; animation: livePulse 2s infinite; }

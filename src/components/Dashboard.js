@@ -137,7 +137,7 @@ class Dashboard extends React.Component {
                   <Tooltip formatter={(v, n) => (n === 'dar' ? v + '%' : v)} />
                   <Bar isAnimationActive={false} dataKey="dar" name="Avg D.A.R %">
                     <LabelList dataKey="dar" position="top"
-                      formatter={(v) => v + '%'} style={{ fontSize: 11, fontWeight: 700, fill: '#223344' }} />
+                      formatter={(v) => v + '%'} style={{ fontSize: 11, fontWeight: 700, fill: 'var(--ink)' }} />
                     {bandChartData.map((d, i) => <Cell key={i} fill={darColor(d.dar)} />)}
                   </Bar>
                 </BarChart>
@@ -233,7 +233,7 @@ class Dashboard extends React.Component {
                 barSize={Math.max(14, zoom - 14)}>
                 <LabelList dataKey="dar" position="top"
                   formatter={(v) => v + '%'}
-                  style={{ fontSize: Math.min(12, Math.max(9, Math.round(zoom / 7))), fontWeight: 700, fill: '#223344' }} />
+                  style={{ fontSize: Math.min(12, Math.max(9, Math.round(zoom / 7))), fontWeight: 700, fill: 'var(--ink)' }} />
                 {chartData.map((d, i) => <Cell key={i} fill={darColor(d.dar)} />)}
               </Bar>
             </BarChart>
@@ -306,7 +306,7 @@ class Dashboard extends React.Component {
             <YAxis allowDecimals={false} />
             <Tooltip />
             <Bar isAnimationActive={false} dataKey="count" name="Feeders">
-              <LabelList dataKey="count" position="top" style={{ fontSize: 11, fontWeight: 700, fill: '#223344' }} />
+              <LabelList dataKey="count" position="top" style={{ fontSize: 11, fontWeight: 700, fill: 'var(--ink)' }} />
               {pfChartData.map((_, i) => <Cell key={i} fill={bucketColors[i] || '#1653a1'} />)}
             </Bar>
           </BarChart>

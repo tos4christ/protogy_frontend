@@ -8,6 +8,7 @@ import NercDashboard from './components/NercDashboard';
 import ExecutiveSummary from './components/ExecutiveSummary';
 import DarHistory from './components/DarHistory';
 import Reporting from './components/Reporting';
+import PerformanceCategorization from './components/PerformanceCategorization';
 import SbtScorecard from './components/SbtScorecard';
 import LeagueTable from './components/LeagueTable';
 import DarAnomalies from './components/DarAnomalies';
@@ -40,6 +41,7 @@ const NAV = [
   ['exec', 'Executive Summary', '▣'],
   ['dar-history', 'Historical DAR', '▤'],
   ['reporting', 'Reporting', '▥'],
+  ['categorization', 'Performance Categorization', '▧'],
   ['nerc', 'NERC View', '◈'],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
@@ -156,6 +158,7 @@ class App extends React.Component {
             {tab === 'exec' && <ExecutiveSummary onDrillDown={this.handleDrillDown} />}
             {tab === 'dar-history' && <DarHistory />}
             {tab === 'reporting' && <Reporting drillDown={this.state.drillDown} />}
+            {tab === 'categorization' && <PerformanceCategorization drillDown={this.state.drillDown} onDrillDown={this.handleDrillDown} />}
             {tab === 'nerc' && <NercDashboard initialDisco={this.state.drillDown && this.state.drillDown.disco} />}
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}

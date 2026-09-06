@@ -69,10 +69,12 @@ const api = {
   // disco + band are folded into every report link so exports always match
   // what's selected on screen (NERC review II, items ix/x/xiii, plus Band
   // filtering added afterward so DAR can be pulled per-Band per-Disco).
-  nercReportUrl: (name, qs, disco, band) =>
+  nercReportUrl: (name, qs, disco, band, state, voltageClass) =>
     `${BASE}/nerc/report/${name}?${qs}` +
     `${disco && disco !== 'all' ? `&disco=${encodeURIComponent(disco)}` : ''}` +
     `${band && band !== 'all' ? `&band=${encodeURIComponent(band)}` : ''}` +
+    `${state && state !== 'all' ? `&state=${encodeURIComponent(state)}` : ''}` +
+    `${voltageClass && voltageClass !== 'all' ? `&voltageClass=${encodeURIComponent(voltageClass)}` : ''}` +
     `&token=${encodeURIComponent(token())}`,
   sbtScorecard: (date, disco, band) => {
     const qs = [];
@@ -171,6 +173,19 @@ const api = {
     if (from) qs.push(`from=${from}`);
     if (to) qs.push(`to=${to}`);
     return j(`/nerc/reporting-detail?${qs.join('&')}`);
+  },
+  performanceCategorization: (filters) => {
+    const { month, disco, band, state, voltageClass, search, page, limit } = filters || {};
+    const qs = [];
+    if (month) qs.push(`month=${month}`);
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    if (state && state !== 'all') qs.push(`state=${encodeURIComponent(state)}`);
+    if (voltageClass && voltageClass !== 'all') qs.push(`voltageClass=${encodeURIComponent(voltageClass)}`);
+    if (search) qs.push(`search=${encodeURIComponent(search)}`);
+    if (page) qs.push(`page=${page}`);
+    if (limit) qs.push(`limit=${limit}`);
+    return j(`/nerc/performance-categorization${qs.length ? `?${qs.join('&')}` : ''}`);
   },
   onboardMeter: (body) => j('/meters', {
     method: 'POST',

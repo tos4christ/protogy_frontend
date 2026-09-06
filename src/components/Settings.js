@@ -36,6 +36,10 @@ const PQ_LABELS = {
   pf_poor_threshold: 'Power factor below this counts as "poor" (0–1, e.g. 0.85)',
   current_imbalance_pct_threshold: 'Phase current imbalance (%) above this is flagged',
 };
+const CATEGORIZATION_LABELS = {
+  categorization_compliant_pct: 'Availability (%) at/above this = Compliant',
+  categorization_downgrade_pct: 'Availability (%) at/above this (but below Compliant) = Marked for Compensation; below this = Marked for Compensation and Downgrade',
+};
 
 // Platform settings (admin): thresholds used by the NERC view and reports.
 class Settings extends React.Component {
@@ -129,6 +133,19 @@ class Settings extends React.Component {
                 <label key={k}>{PQ_LABELS[k]}
                   <input type="number" step={k === 'pf_poor_threshold' ? '0.01' : '1'} min="0"
                     value={values[k] ?? ''}
+                    onChange={(e) => this.setState({
+                      values: { ...values, [k]: e.target.value } })} />
+                </label>
+              ))}
+
+              <h3 className="sub-h">Performance Categorization thresholds</h3>
+              <p className="muted" style={{ marginTop: 0 }}>Classifies each feeder monthly
+                (1st–21st) into Compliant / Marked for Compensation / Marked for Compensation
+                and Downgrade, based on Availability = hours supplied ÷ hours required.
+                Confirm these against NERC's actual published cutoffs.</p>
+              {Object.keys(CATEGORIZATION_LABELS).map((k) => (
+                <label key={k}>{CATEGORIZATION_LABELS[k]}
+                  <input type="number" step="1" min="0" max="100" value={values[k] ?? ''}
                     onChange={(e) => this.setState({
                       values: { ...values, [k]: e.target.value } })} />
                 </label>

@@ -9,9 +9,9 @@ import ExecutiveSummary from './components/ExecutiveSummary';
 import DarHistory from './components/DarHistory';
 import Reporting from './components/Reporting';
 import PerformanceCategorization from './components/PerformanceCategorization';
+import Diagnostics from './components/Diagnostics';
 import SbtScorecard from './components/SbtScorecard';
 import LeagueTable from './components/LeagueTable';
-import DarAnomalies from './components/DarAnomalies';
 import Settings from './components/Settings';
 import AdminPanel from './components/AdminPanel';
 import Login from './components/Login';
@@ -42,11 +42,11 @@ const NAV = [
   ['dar-history', 'Historical DAR', '▤'],
   ['reporting', 'Reporting', '▥'],
   ['categorization', 'Performance Categorization', '▧'],
+  ['diagnostics', 'Diagnostics', '⚠'],
   ['nerc', 'NERC View', '◈'],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
-  ['anomalies', 'DAR Anomalies', '⚠', 'admin'],
-  ['map', 'Eagle Eye', '◎'],
+  ['map', 'Eagle Eye', '◎', 'admin'],
   ['status', 'Feeder Status', '≣'],
   ['explorer', 'Feeder Explorer', '⌕'],
   ['onboard', 'Onboard Meter', '⊕', 'admin'],
@@ -162,8 +162,8 @@ class App extends React.Component {
             {tab === 'nerc' && <NercDashboard initialDisco={this.state.drillDown && this.state.drillDown.disco} />}
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}
-            {tab === 'anomalies' && session.role === 'admin' && <DarAnomalies />}
-            {tab === 'map' && <MapView />}
+            {tab === 'diagnostics' && <Diagnostics drillDown={this.state.drillDown} onDrillDown={this.handleDrillDown} />}
+            {tab === 'map' && session.role === 'admin' && <MapView />}
             {tab === 'status' && <StatusBoard />}
             {tab === 'explorer' &&
               <MeterExplorer meters={meters} isAdmin={session.role === 'admin'}

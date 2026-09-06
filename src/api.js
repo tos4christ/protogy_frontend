@@ -187,6 +187,19 @@ const api = {
     if (limit) qs.push(`limit=${limit}`);
     return j(`/nerc/performance-categorization${qs.length ? `?${qs.join('&')}` : ''}`);
   },
+  diagnostics: (filters) => {
+    const { date, disco, band, state, voltageClass, search, page, limit } = filters || {};
+    const qs = [];
+    if (date) qs.push(`date=${date}`);
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    if (state && state !== 'all') qs.push(`state=${encodeURIComponent(state)}`);
+    if (voltageClass && voltageClass !== 'all') qs.push(`voltageClass=${encodeURIComponent(voltageClass)}`);
+    if (search) qs.push(`search=${encodeURIComponent(search)}`);
+    if (page) qs.push(`page=${page}`);
+    if (limit) qs.push(`limit=${limit}`);
+    return j(`/nerc/diagnostics${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
   onboardMeter: (body) => j('/meters', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

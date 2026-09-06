@@ -40,6 +40,11 @@ const CATEGORIZATION_LABELS = {
   categorization_compliant_pct: 'Availability (%) at/above this = Compliant',
   categorization_downgrade_pct: 'Availability (%) at/above this (but below Compliant) = Marked for Compensation; below this = Marked for Compensation and Downgrade',
 };
+const DIAGNOSTICS_LABELS = {
+  diag_latency_warn_s: 'Average latency (seconds) above this is flagged as "High Latency"',
+  diag_buffered_warn_count: 'Buffered readings (count/day) above this is flagged as "Heavy Buffering"',
+  diag_gap_buckets_warn: 'Empty 15-min buckets in a day (out of 96) before flagging "Data Gaps"',
+};
 
 // Platform settings (admin): thresholds used by the NERC view and reports.
 class Settings extends React.Component {
@@ -146,6 +151,18 @@ class Settings extends React.Component {
               {Object.keys(CATEGORIZATION_LABELS).map((k) => (
                 <label key={k}>{CATEGORIZATION_LABELS[k]}
                   <input type="number" step="1" min="0" max="100" value={values[k] ?? ''}
+                    onChange={(e) => this.setState({
+                      values: { ...values, [k]: e.target.value } })} />
+                </label>
+              ))}
+
+              <h3 className="sub-h">Diagnostics page thresholds</h3>
+              <p className="muted" style={{ marginTop: 0 }}>Flags communication-quality and
+                data-gap issues on the Diagnostics page — separate from the connectivity
+                (online/offline) status shown elsewhere.</p>
+              {Object.keys(DIAGNOSTICS_LABELS).map((k) => (
+                <label key={k}>{DIAGNOSTICS_LABELS[k]}
+                  <input type="number" step="1" min="0" value={values[k] ?? ''}
                     onChange={(e) => this.setState({
                       values: { ...values, [k]: e.target.value } })} />
                 </label>

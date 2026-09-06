@@ -10,6 +10,14 @@ const daysAgo = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n);
 const num = (v, dp = 1) => (v == null ? '—' : Number(v).toFixed(dp));
 const shortDay = (d) => d.slice(5);
 const shortTime = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const dayTime = (t) => new Date(t).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+// Label format adapts to how the backend bucketed the intraday series —
+// time-only is ambiguous once a range spans more than one day.
+function intradayLabel(t, bucket) {
+  if (bucket === '1 day') return shortDay(new Date(t).toISOString().slice(0, 10));
+  if (bucket === '1 hour') return dayTime(t);
+  return shortTime(t);
+}
 
 function Tile({ value, label }) {
   return (
@@ -104,7 +112,7 @@ class Reporting extends React.Component {
   exportCsv() {
     const { detail } = this.state;
     if (!detail) return;
-    downloadCsv(`${detail.feeder.feeder}_intraday_${detail.to}.csv`,
+    downloadCsv(`${detail.feeder.feeder}_electrical_${detail.from}_to_${detail.to}.csv`,
       ['Time', 'V L1', 'V L2', 'V L3', 'I L1', 'I L2', 'I L3', 'Freq', 'PF', 'Active kW', 'Reactive kW', 'Apparent kW'],
       detail.intraday.map((r) => [r.t, r.v1, r.v2, r.v3, r.i1, r.i2, r.i3, r.freq, r.pf, r.p, r.q, r.s]));
     downloadCsv(`${detail.feeder.feeder}_trend_${detail.from}_to_${detail.to}.csv`,
@@ -121,9 +129,8 @@ class Reporting extends React.Component {
         <div className="card">
           <h2>Reporting — Feeder Deep Dive</h2>
           <p className="muted" style={{ marginTop: 0 }}>
-            Narrow with the filters below, then pick a feeder for full numbers and graphs.
-            The "To" date also acts as the snapshot day for the intraday charts, the same
-            convention used in Feeder Explorer.
+            Narrow with the filters below, then pick a feeder for full numbers and graphs
+            across the selected From/To date range.
           </p>
           <div className="controls">
             <label>Disco
@@ -196,6 +203,13 @@ class Reporting extends React.Component {
                 {detail.feeder.state || 'No State'} · {detail.feeder.voltageClass || 'No Voltage Level'} ·{' '}
                 <span className={'badge ' + detail.feeder.connectivity}>{detail.feeder.connectivity}</span>
               </p>
+              <p className="muted">
+                All charts below cover {detail.from} to {detail.to}. Resolution adapts to the
+                range so wider spans stay readable: {' '}
+                {detail.intradayBucket === '15 minutes' ? '15-minute averages (≤3 days)'
+                  : detail.intradayBucket === '1 hour' ? 'hourly averages (≤14 days)'
+                  : 'daily averages (>14 days)'}.
+              </p>
               <h3 className="sub-h">Latest Snapshot</h3>
               <div className="stat-grid">
                 <Tile value={num(detail.snapshot.voltageL1) + ' / ' + num(detail.snapshot.voltageL2) + ' / ' + num(detail.snapshot.voltageL3)} label="Voltage L1/L2/L3 (kV)" />
@@ -209,9 +223,9 @@ class Reporting extends React.Component {
             </div>
 
             <div className="card">
-              <h2>Voltage ({shortDay(detail.to)})</h2>
+              <h2>Voltage ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: shortTime(r.t) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
                   <YAxis unit=" kV" />
@@ -224,9 +238,9 @@ class Reporting extends React.Component {
             </div>
 
             <div className="card">
-              <h2>Current ({shortDay(detail.to)})</h2>
+              <h2>Current ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: shortTime(r.t) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
                   <YAxis unit=" A" />
@@ -239,9 +253,9 @@ class Reporting extends React.Component {
             </div>
 
             <div className="card">
-              <h2>Active, Reactive &amp; Apparent Power ({shortDay(detail.to)})</h2>
+              <h2>Active, Reactive &amp; Apparent Power ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: shortTime(r.t) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
                   <YAxis unit=" kW" />
@@ -254,9 +268,9 @@ class Reporting extends React.Component {
             </div>
 
             <div className="card">
-              <h2>Frequency &amp; Power Factor ({shortDay(detail.to)})</h2>
+              <h2>Frequency &amp; Power Factor ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: shortTime(r.t) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
                   <YAxis yAxisId="hz" domain={[45, 55]} unit=" Hz" />

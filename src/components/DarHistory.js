@@ -29,7 +29,7 @@ class DarHistory extends React.Component {
       data: null, error: null,
       discos: [], states: [], voltageClasses: [],
       from: daysAgo(13), to: yesterday(),
-      disco: 'all', band: 'all', state: 'all', voltageClass: 'all',
+      disco: 'all', band: 'all', state: 'all', voltageClass: 'all', search: '',
       page: 1, limit: 25,
     };
     this.load = this.load.bind(this);
@@ -43,8 +43,8 @@ class DarHistory extends React.Component {
   }
 
   load() {
-    const { from, to, disco, band, state, voltageClass, page, limit } = this.state;
-    api.darHistory({ from, to, disco, band, state, voltageClass, page, limit })
+    const { from, to, disco, band, state, voltageClass, search, page, limit } = this.state;
+    api.darHistory({ from, to, disco, band, state, voltageClass, search, page, limit })
       .then((data) => this.setState({ data, error: null }))
       .catch((e) => this.setState({ error: e.message }));
   }
@@ -53,9 +53,59 @@ class DarHistory extends React.Component {
     this.setState({ ...patch, page: 1 }, this.load);
   }
 
+  renderFilters() {
+    const { discos, states, voltageClasses, from, to, disco, band, state, voltageClass, search } = this.state;
+    return (
+      <div className="controls">
+        <label>From
+          <input type="date" value={from} max={to}
+            onChange={(e) => this.onFilterChange({ from: e.target.value })} />
+        </label>
+        <label>To
+          <input type="date" value={to} max={today()}
+            onChange={(e) => this.onFilterChange({ to: e.target.value })} />
+        </label>
+        <label>Disco
+          <select value={disco} onChange={(e) => this.onFilterChange({ disco: e.target.value })}>
+            <option value="all">All Discos</option>
+            {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>)}
+          </select>
+        </label>
+        <label>State
+          <select value={state} onChange={(e) => this.onFilterChange({ state: e.target.value })}>
+            <option value="all">All States</option>
+            {states.map((s) => <option key={s.state} value={s.state}>{s.state} ({s.feeders})</option>)}
+          </select>
+        </label>
+        <label>Voltage Level
+          <select value={voltageClass} onChange={(e) => this.onFilterChange({ voltageClass: e.target.value })}>
+            <option value="all">All Voltage Levels</option>
+            {voltageClasses.map((v) => (
+              <option key={v.voltage_class} value={v.voltage_class}>{v.voltage_class} ({v.feeders})</option>
+            ))}
+          </select>
+        </label>
+        <label>Band
+          <select value={band} onChange={(e) => this.onFilterChange({ band: e.target.value })}>
+            <option value="all">All Bands</option>
+            {['A', 'B', 'C', 'D', 'E'].map((b) => <option key={b} value={b}>Band {b}</option>)}
+          </select>
+        </label>
+        <label>Search feeder / meter ID
+          <input value={search} placeholder="e.g. 11KV_G4 or Meter-02"
+            onChange={(e) => {
+              const v = e.target.value;
+              this.setState({ search: v });
+              clearTimeout(this.searchTimer);
+              this.searchTimer = setTimeout(() => this.onFilterChange({ search: v }), 300);
+            }} />
+        </label>
+      </div>
+    );
+  }
+
   render() {
-    const { data, error, discos, states, voltageClasses,
-      from, to, disco, band, state, voltageClass, page, limit } = this.state;
+    const { data, error, from, to, page, limit } = this.state;
     if (error) return <div className="error">{error}</div>;
     if (!data) return <div className="card">Loading DAR history…</div>;
     const totalPages = data.totalPages || 1;
@@ -69,42 +119,7 @@ class DarHistory extends React.Component {
             The date range here is separate from the single-day filter used on the Executive
             Summary page.
           </p>
-          <div className="controls">
-            <label>From
-              <input type="date" value={from} max={to}
-                onChange={(e) => this.onFilterChange({ from: e.target.value })} />
-            </label>
-            <label>To
-              <input type="date" value={to} max={today()}
-                onChange={(e) => this.onFilterChange({ to: e.target.value })} />
-            </label>
-            <label>Disco
-              <select value={disco} onChange={(e) => this.onFilterChange({ disco: e.target.value })}>
-                <option value="all">All Discos</option>
-                {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>)}
-              </select>
-            </label>
-            <label>State
-              <select value={state} onChange={(e) => this.onFilterChange({ state: e.target.value })}>
-                <option value="all">All States</option>
-                {states.map((s) => <option key={s.state} value={s.state}>{s.state} ({s.feeders})</option>)}
-              </select>
-            </label>
-            <label>Voltage Level
-              <select value={voltageClass} onChange={(e) => this.onFilterChange({ voltageClass: e.target.value })}>
-                <option value="all">All Voltage Levels</option>
-                {voltageClasses.map((v) => (
-                  <option key={v.voltage_class} value={v.voltage_class}>{v.voltage_class} ({v.feeders})</option>
-                ))}
-              </select>
-            </label>
-            <label>Band
-              <select value={band} onChange={(e) => this.onFilterChange({ band: e.target.value })}>
-                <option value="all">All Bands</option>
-                {['A', 'B', 'C', 'D', 'E'].map((b) => <option key={b} value={b}>Band {b}</option>)}
-              </select>
-            </label>
-          </div>
+          {this.renderFilters()}
           {data.days.length >= 92 && (
             <p className="muted">Range capped at 92 days to keep this page responsive —
               narrow the filters above for a longer effective history.</p>
@@ -125,6 +140,11 @@ class DarHistory extends React.Component {
 
         <div className="card">
           <h2>Substation D.A.R Matrix</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Same filters as above, repeated here for convenience — narrow these down first
+            when hunting a specific substation in a large fleet.
+          </p>
+          {this.renderFilters()}
           <div className="controls">
             <span className="muted">Showing {data.feederRows.length} of {data.total} substations</span>
             <label style={{ marginLeft: 'auto' }}>Per page

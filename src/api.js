@@ -100,7 +100,7 @@ const api = {
     return j(`/nerc/executive-summary${qs.length ? `?${qs.join('&')}` : ''}`);
   },
   darHistory: (filters) => {
-    const { from, to, disco, band, state, voltageClass, page, limit } = filters || {};
+    const { from, to, disco, band, state, voltageClass, search, page, limit } = filters || {};
     const qs = [];
     if (from) qs.push(`from=${from}`);
     if (to) qs.push(`to=${to}`);
@@ -108,6 +108,7 @@ const api = {
     if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
     if (state && state !== 'all') qs.push(`state=${encodeURIComponent(state)}`);
     if (voltageClass && voltageClass !== 'all') qs.push(`voltageClass=${encodeURIComponent(voltageClass)}`);
+    if (search) qs.push(`search=${encodeURIComponent(search)}`);
     if (page) qs.push(`page=${page}`);
     if (limit) qs.push(`limit=${limit}`);
     return j(`/nerc/dar-history${qs.length ? `?${qs.join('&')}` : ''}`);

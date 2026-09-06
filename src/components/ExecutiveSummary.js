@@ -4,6 +4,7 @@ import api from '../api';
 const today = () => new Date().toISOString().slice(0, 10);
 const yesterday = () => { const d = new Date(); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); };
 const pctColor = (pct) => (pct == null ? undefined : pct >= 95 ? '#2f9e44' : pct >= 80 ? '#e8a80c' : '#d64545');
+const PAGE_SIZES = [25, 50, 100, 250];
 
 function Tile({ value, label, color }) {
   return (
@@ -26,6 +27,7 @@ class ExecutiveSummary extends React.Component {
       data: null, error: null,
       discos: [], states: [], voltageClasses: [],
       date: yesterday(), disco: 'all', band: 'all', state: 'all', voltageClass: 'all',
+      page: 1, limit: 50,
     };
     this.load = this.load.bind(this);
   }
@@ -38,14 +40,16 @@ class ExecutiveSummary extends React.Component {
   }
 
   load() {
-    const { date, disco, band, state, voltageClass } = this.state;
-    api.executiveSummary({ date, disco, band, state, voltageClass })
+    const { date, disco, band, state, voltageClass, page, limit } = this.state;
+    api.executiveSummary({ date, disco, band, state, voltageClass, page, limit })
       .then((data) => this.setState({ data, error: null }))
       .catch((e) => this.setState({ error: e.message }));
   }
 
+  // Any filter change resets to page 1 — the previous page number may no
+  // longer exist in a narrower/wider result set.
   onFilterChange(patch) {
-    this.setState(patch, this.load);
+    this.setState({ ...patch, page: 1 }, this.load);
   }
 
   // Placeholder for the Page 1 -> Page 3 drill-down link (Page 3 not built
@@ -58,10 +62,49 @@ class ExecutiveSummary extends React.Component {
     }
   }
 
+  renderFilters() {
+    const { discos, states, voltageClasses, date, disco, band, state, voltageClass } = this.state;
+    return (
+      <div className="controls">
+        <label>Date
+          <input type="date" value={date} max={today()}
+            onChange={(e) => this.onFilterChange({ date: e.target.value })} />
+        </label>
+        <label>Disco
+          <select value={disco} onChange={(e) => this.onFilterChange({ disco: e.target.value })}>
+            <option value="all">All Discos</option>
+            {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>)}
+          </select>
+        </label>
+        <label>State
+          <select value={state} onChange={(e) => this.onFilterChange({ state: e.target.value })}>
+            <option value="all">All States</option>
+            {states.map((s) => <option key={s.state} value={s.state}>{s.state} ({s.feeders})</option>)}
+          </select>
+        </label>
+        <label>Voltage Level
+          <select value={voltageClass} onChange={(e) => this.onFilterChange({ voltageClass: e.target.value })}>
+            <option value="all">All Voltage Levels</option>
+            {voltageClasses.map((v) => (
+              <option key={v.voltage_class} value={v.voltage_class}>{v.voltage_class} ({v.feeders})</option>
+            ))}
+          </select>
+        </label>
+        <label>Band
+          <select value={band} onChange={(e) => this.onFilterChange({ band: e.target.value })}>
+            <option value="all">All Bands</option>
+            {['A', 'B', 'C', 'D', 'E'].map((b) => <option key={b} value={b}>Band {b}</option>)}
+          </select>
+        </label>
+      </div>
+    );
+  }
+
   render() {
-    const { data, error, discos, states, voltageClasses, date, disco, band, state, voltageClass } = this.state;
+    const { data, error, date, page, limit } = this.state;
     if (error) return <div className="error">{error}</div>;
     if (!data) return <div className="card">Loading executive summary…</div>;
+    const totalPages = data.totalPages || 1;
 
     return (
       <div>
@@ -71,38 +114,7 @@ class ExecutiveSummary extends React.Component {
             Fleet-wide feeder performance for a single day. Defaults to yesterday, since a
             day still in progress can't yet have accumulated its required supply hours.
           </p>
-          <div className="controls">
-            <label>Date
-              <input type="date" value={date} max={today()}
-                onChange={(e) => this.onFilterChange({ date: e.target.value })} />
-            </label>
-            <label>Disco
-              <select value={disco} onChange={(e) => this.onFilterChange({ disco: e.target.value })}>
-                <option value="all">All Discos</option>
-                {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>)}
-              </select>
-            </label>
-            <label>State
-              <select value={state} onChange={(e) => this.onFilterChange({ state: e.target.value })}>
-                <option value="all">All States</option>
-                {states.map((s) => <option key={s.state} value={s.state}>{s.state} ({s.feeders})</option>)}
-              </select>
-            </label>
-            <label>Voltage Level
-              <select value={voltageClass} onChange={(e) => this.onFilterChange({ voltageClass: e.target.value })}>
-                <option value="all">All Voltage Levels</option>
-                {voltageClasses.map((v) => (
-                  <option key={v.voltage_class} value={v.voltage_class}>{v.voltage_class} ({v.feeders})</option>
-                ))}
-              </select>
-            </label>
-            <label>Band
-              <select value={band} onChange={(e) => this.onFilterChange({ band: e.target.value })}>
-                <option value="all">All Bands</option>
-                {['A', 'B', 'C', 'D', 'E'].map((b) => <option key={b} value={b}>Band {b}</option>)}
-              </select>
-            </label>
-          </div>
+          {this.renderFilters()}
 
           <div className="stat-grid">
             <Tile value={data.feeders} label="Feeders in scope" />
@@ -158,6 +170,63 @@ class ExecutiveSummary extends React.Component {
           </div>
           <p className="muted">Click a row to drill into that Disco's detail — this will open
             the Reporting page (Page 3) pre-filtered once it's built.</p>
+        </div>
+
+        <div className="card">
+          <h2>Feeder Performance</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Every individual feeder matching the filters below — the same Date/Disco/State/
+            Voltage Level/Band filters as above, repeated here for convenience.
+          </p>
+          {this.renderFilters()}
+          <div className="controls">
+            <span className="muted">
+              Showing {data.feederRows.length ? (page - 1) * (typeof limit === 'number' ? limit : 0) + 1 : 0}
+              –{(page - 1) * (typeof limit === 'number' ? limit : 0) + data.feederRows.length} of {data.total}
+            </span>
+            <label style={{ marginLeft: 'auto' }}>Per page
+              <select value={limit} onChange={(e) => this.onFilterChange({ limit: +e.target.value })}>
+                {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+            <button className="btn secondary" disabled={page <= 1}
+              onClick={() => this.setState({ page: page - 1 }, this.load)}>‹ Prev</button>
+            <span className="muted">Page {page} of {totalPages}</span>
+            <button className="btn secondary" disabled={page >= totalPages}
+              onClick={() => this.setState({ page: page + 1 }, this.load)}>Next ›</button>
+          </div>
+          <div className="table-wrap">
+            <table className="data compact">
+              <thead>
+                <tr><th>Feeder</th><th>Disco</th><th>State</th><th>Voltage Level</th><th>Band</th>
+                  <th>Connectivity</th><th>D.A.R</th><th>Availability</th>
+                  <th>Energy (kWh)</th><th>Avg Load (kW)</th><th>Peak Load (kW)</th></tr>
+              </thead>
+              <tbody>
+                {data.feederRows.map((f) => (
+                  <tr key={f.meterId}>
+                    <td>{f.feeder}</td>
+                    <td>{f.disco || '—'}</td>
+                    <td>{f.state || '—'}</td>
+                    <td>{f.voltageClass || '—'}</td>
+                    <td>{f.band || '—'}</td>
+                    <td><span className={'badge ' + f.connectivity}>{f.connectivity}</span></td>
+                    <td style={{ color: pctColor(f.darPct), fontWeight: 700 }}>
+                      {f.darPct != null ? f.darPct + '%' : '—'}
+                    </td>
+                    <td style={{ color: pctColor(f.availabilityPct), fontWeight: 700 }}>
+                      {f.availabilityPct != null ? f.availabilityPct + '%' : '—'}
+                    </td>
+                    <td>{f.energyKwh}</td>
+                    <td>{f.avgLoadKW != null ? f.avgLoadKW : '—'}</td>
+                    <td>{f.peakLoadKW != null ? f.peakLoadKW : '—'}</td>
+                  </tr>
+                ))}
+                {data.feederRows.length === 0 &&
+                  <tr><td colSpan="11" className="muted">No feeders match this filter.</td></tr>}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );

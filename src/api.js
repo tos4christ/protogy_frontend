@@ -88,13 +88,15 @@ const api = {
     return j(`/nerc/league-table${qs.length ? `?${qs.join('&')}` : ''}`);
   },
   executiveSummary: (filters) => {
-    const { date, disco, band, state, voltageClass } = filters || {};
+    const { date, disco, band, state, voltageClass, page, limit } = filters || {};
     const qs = [];
     if (date) qs.push(`date=${date}`);
     if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
     if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
     if (state && state !== 'all') qs.push(`state=${encodeURIComponent(state)}`);
     if (voltageClass && voltageClass !== 'all') qs.push(`voltageClass=${encodeURIComponent(voltageClass)}`);
+    if (page) qs.push(`page=${page}`);
+    if (limit) qs.push(`limit=${limit}`);
     return j(`/nerc/executive-summary${qs.length ? `?${qs.join('&')}` : ''}`);
   },
   darAnomalies: (days, disco, band) => {

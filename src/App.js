@@ -5,6 +5,7 @@ import MeterExplorer from './components/MeterExplorer';
 import Dashboard from './components/Dashboard';
 import MapView from './components/MapView';
 import NercDashboard from './components/NercDashboard';
+import ExecutiveSummary from './components/ExecutiveSummary';
 import SbtScorecard from './components/SbtScorecard';
 import LeagueTable from './components/LeagueTable';
 import DarAnomalies from './components/DarAnomalies';
@@ -34,6 +35,7 @@ function ThemeToggle({ theme, onToggle }) {
 
 const NAV = [
   ['dashboard', 'Dashboard', '▦'],
+  ['exec', 'Executive Summary', '▣'],
   ['nerc', 'NERC View', '◈'],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
@@ -51,12 +53,22 @@ class App extends React.Component {
     super(props);
     this.state = {
       session: api.session(), tab: 'dashboard', meters: [], error: null,
-      navCollapsed: false, theme: getInitialTheme(),
+      navCollapsed: false, theme: getInitialTheme(), drillDown: null,
     };
     this.loadMeters = this.loadMeters.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
     this.toggleTheme = this.toggleTheme.bind(this);
+    this.handleDrillDown = this.handleDrillDown.bind(this);
+  }
+
+  // Page 1 (Executive Summary) -> drill-down handoff. Page 3 (Reporting)
+  // doesn't exist yet, so in the meantime this routes to NERC View
+  // pre-filtered to the clicked Disco, which is the closest existing
+  // equivalent — once Page 3 lands this should switch tab: 'reporting'
+  // instead and NercDashboard's initialDisco prop can be removed.
+  handleDrillDown(target) {
+    this.setState({ tab: 'nerc', drillDown: target });
   }
 
   componentDidMount() {
@@ -141,7 +153,8 @@ class App extends React.Component {
           <main className="page">
             {error && <div className="error">{error}</div>}
             {tab === 'dashboard' && <Dashboard />}
-            {tab === 'nerc' && <NercDashboard />}
+            {tab === 'exec' && <ExecutiveSummary onDrillDown={this.handleDrillDown} />}
+            {tab === 'nerc' && <NercDashboard initialDisco={this.state.drillDown && this.state.drillDown.disco} />}
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}
             {tab === 'anomalies' && session.role === 'admin' && <DarAnomalies />}

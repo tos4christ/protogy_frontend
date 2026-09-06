@@ -87,6 +87,16 @@ const api = {
     if (compareDays) qs.push(`compareDays=${compareDays}`);
     return j(`/nerc/league-table${qs.length ? `?${qs.join('&')}` : ''}`);
   },
+  executiveSummary: (filters) => {
+    const { date, disco, band, state, voltageClass } = filters || {};
+    const qs = [];
+    if (date) qs.push(`date=${date}`);
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    if (state && state !== 'all') qs.push(`state=${encodeURIComponent(state)}`);
+    if (voltageClass && voltageClass !== 'all') qs.push(`voltageClass=${encodeURIComponent(voltageClass)}`);
+    return j(`/nerc/executive-summary${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
   darAnomalies: (days, disco, band) => {
     const qs = [];
     if (days) qs.push(`days=${days}`);
@@ -128,6 +138,8 @@ const api = {
   listMeters: (disco) => j('/meters' + (disco && disco !== 'all' ? `?disco=${encodeURIComponent(disco)}` : '')),
   listDiscos: () => j('/discos'),
   listBands: () => j('/bands'),
+  listStates: () => j('/states'),
+  listVoltageClasses: () => j('/voltage-classes'),
   onboardMeter: (body) => j('/meters', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

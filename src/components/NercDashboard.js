@@ -21,7 +21,7 @@ class NercDashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      s: null, table: null, discos: [], disco: 'all', band: 'all',
+      s: null, table: null, discos: [], disco: props.initialDisco || 'all', band: 'all',
       date: today(), month: new Date().toISOString().slice(0, 7),
       from: today(), to: today(), error: null,
       feeders: null,

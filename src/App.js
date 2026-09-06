@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import MapView from './components/MapView';
 import NercDashboard from './components/NercDashboard';
 import ExecutiveSummary from './components/ExecutiveSummary';
+import DarHistory from './components/DarHistory';
 import SbtScorecard from './components/SbtScorecard';
 import LeagueTable from './components/LeagueTable';
 import DarAnomalies from './components/DarAnomalies';
@@ -36,6 +37,7 @@ function ThemeToggle({ theme, onToggle }) {
 const NAV = [
   ['dashboard', 'Dashboard', '▦'],
   ['exec', 'Executive Summary', '▣'],
+  ['dar-history', 'Historical DAR', '▤'],
   ['nerc', 'NERC View', '◈'],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
@@ -154,6 +156,7 @@ class App extends React.Component {
             {error && <div className="error">{error}</div>}
             {tab === 'dashboard' && <Dashboard />}
             {tab === 'exec' && <ExecutiveSummary onDrillDown={this.handleDrillDown} />}
+            {tab === 'dar-history' && <DarHistory />}
             {tab === 'nerc' && <NercDashboard initialDisco={this.state.drillDown && this.state.drillDown.disco} />}
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}

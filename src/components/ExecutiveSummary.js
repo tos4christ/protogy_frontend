@@ -52,12 +52,13 @@ class ExecutiveSummary extends React.Component {
     this.setState({ ...patch, page: 1 }, this.load);
   }
 
-  // Placeholder for the Page 1 -> Page 3 drill-down link (Page 3 not built
-  // yet). Once it exists, this hands the clicked Disco + current filters to
-  // the parent App shell so it can switch tabs and pre-select them there.
-  drillInto(disco) {
+  // Placeholder for the Page 1 -> Page 3 drill-down link. Hands the
+  // clicked Disco (and, from the Feeder Performance table, a specific
+  // meterId) plus current filters to the parent App shell, which switches
+  // to the Reporting tab and pre-selects them there.
+  drillInto(disco, meterId) {
     if (this.props.onDrillDown) {
-      this.props.onDrillDown({ disco, date: this.state.date, band: this.state.band,
+      this.props.onDrillDown({ disco, meterId, date: this.state.date, band: this.state.band,
         state: this.state.state, voltageClass: this.state.voltageClass });
     }
   }
@@ -147,7 +148,7 @@ class ExecutiveSummary extends React.Component {
               <tbody>
                 {data.discos.map((d) => (
                   <tr key={d.disco} onClick={() => this.drillInto(d.disco)} style={{ cursor: 'pointer' }}
-                    title="Drill down (opens in the Reporting page once built)">
+                    title="Open this Disco in Reporting">
                     <td>{d.disco}</td>
                     <td>{d.feeders}</td>
                     <td style={{ color: '#2f9e44', fontWeight: 700 }}>{d.online}</td>
@@ -169,7 +170,7 @@ class ExecutiveSummary extends React.Component {
             </table>
           </div>
           <p className="muted">Click a row to drill into that Disco's detail — this will open
-            the Reporting page (Page 3) pre-filtered once it's built.</p>
+            the Reporting page pre-filtered to that Disco.</p>
         </div>
 
         <div className="card">
@@ -204,7 +205,8 @@ class ExecutiveSummary extends React.Component {
               </thead>
               <tbody>
                 {data.feederRows.map((f) => (
-                  <tr key={f.meterId}>
+                  <tr key={f.meterId} onClick={() => this.drillInto(f.disco, f.meterId)}
+                    style={{ cursor: 'pointer' }} title="Open this feeder in Reporting">
                     <td>{f.feeder}</td>
                     <td>{f.disco || '—'}</td>
                     <td>{f.state || '—'}</td>

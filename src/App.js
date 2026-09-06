@@ -7,6 +7,7 @@ import MapView from './components/MapView';
 import NercDashboard from './components/NercDashboard';
 import ExecutiveSummary from './components/ExecutiveSummary';
 import DarHistory from './components/DarHistory';
+import Reporting from './components/Reporting';
 import SbtScorecard from './components/SbtScorecard';
 import LeagueTable from './components/LeagueTable';
 import DarAnomalies from './components/DarAnomalies';
@@ -38,6 +39,7 @@ const NAV = [
   ['dashboard', 'Dashboard', '▦'],
   ['exec', 'Executive Summary', '▣'],
   ['dar-history', 'Historical DAR', '▤'],
+  ['reporting', 'Reporting', '▥'],
   ['nerc', 'NERC View', '◈'],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
@@ -64,13 +66,9 @@ class App extends React.Component {
     this.handleDrillDown = this.handleDrillDown.bind(this);
   }
 
-  // Page 1 (Executive Summary) -> drill-down handoff. Page 3 (Reporting)
-  // doesn't exist yet, so in the meantime this routes to NERC View
-  // pre-filtered to the clicked Disco, which is the closest existing
-  // equivalent — once Page 3 lands this should switch tab: 'reporting'
-  // instead and NercDashboard's initialDisco prop can be removed.
+  // Page 1 (Executive Summary) -> Page 3 (Reporting) drill-down handoff.
   handleDrillDown(target) {
-    this.setState({ tab: 'nerc', drillDown: target });
+    this.setState({ tab: 'reporting', drillDown: target });
   }
 
   componentDidMount() {
@@ -157,6 +155,7 @@ class App extends React.Component {
             {tab === 'dashboard' && <Dashboard />}
             {tab === 'exec' && <ExecutiveSummary onDrillDown={this.handleDrillDown} />}
             {tab === 'dar-history' && <DarHistory />}
+            {tab === 'reporting' && <Reporting drillDown={this.state.drillDown} />}
             {tab === 'nerc' && <NercDashboard initialDisco={this.state.drillDown && this.state.drillDown.disco} />}
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}

@@ -156,6 +156,22 @@ const api = {
   listBands: () => j('/bands'),
   listStates: () => j('/states'),
   listVoltageClasses: () => j('/voltage-classes'),
+  reportingFeeders: (filters) => {
+    const { disco, band, state, voltageClass, search } = filters || {};
+    const qs = [];
+    if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);
+    if (band && band !== 'all') qs.push(`band=${encodeURIComponent(band)}`);
+    if (state && state !== 'all') qs.push(`state=${encodeURIComponent(state)}`);
+    if (voltageClass && voltageClass !== 'all') qs.push(`voltageClass=${encodeURIComponent(voltageClass)}`);
+    if (search) qs.push(`search=${encodeURIComponent(search)}`);
+    return j(`/nerc/reporting-feeders${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
+  reportingDetail: (meterId, from, to) => {
+    const qs = [`meterId=${encodeURIComponent(meterId)}`];
+    if (from) qs.push(`from=${from}`);
+    if (to) qs.push(`to=${to}`);
+    return j(`/nerc/reporting-detail?${qs.join('&')}`);
+  },
   onboardMeter: (body) => j('/meters', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -54,33 +54,90 @@ const NAV = [
   ['settings', 'Settings', '⚒', 'admin'],
 ];
 
+// The app's tab and any drill-down context live in the URL hash, not just
+// in-memory state — that's what makes a page refresh land back on the same
+// screen (with the same drilled-down feeder), and what makes the browser's
+// own Back/Forward buttons work correctly for in-app navigation. Format:
+// "#/<tab>" or "#/<tab>?key=value&key2=value2" for drill-down params.
+function parseHash() {
+  const m = (window.location.hash || '').match(/^#\/([a-zA-Z0-9_-]+)(?:\?(.*))?$/);
+  if (!m) return { tab: 'dashboard', drillDown: null };
+  const params = {};
+  if (m[2]) new URLSearchParams(m[2]).forEach((v, k) => { params[k] = v; });
+  return { tab: m[1], drillDown: Object.keys(params).length ? params : null };
+}
+function buildHash(tab, drillDown) {
+  let h = '#/' + tab;
+  if (drillDown) {
+    const qs = new URLSearchParams();
+    Object.entries(drillDown).forEach(([k, v]) => { if (v != null && v !== '') qs.set(k, v); });
+    const qsStr = qs.toString();
+    if (qsStr) h += '?' + qsStr;
+  }
+  return h;
+}
+// Guards against a stale/bookmarked hash pointing to a tab that doesn't
+// exist, or an admin-only tab opened by a non-admin session.
+function isValidTab(tab, session) {
+  const item = NAV.find(([k]) => k === tab);
+  if (!item) return false;
+  const role = item[3];
+  return !role || (session && session.role === role);
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
+    const session = api.session();
+    const initial = parseHash();
     this.state = {
-      session: api.session(), tab: 'dashboard', meters: [], error: null,
-      navCollapsed: false, theme: getInitialTheme(), drillDown: null,
+      session, tab: isValidTab(initial.tab, session) ? initial.tab : 'dashboard',
+      drillDown: initial.drillDown,
+      meters: [], error: null,
+      navCollapsed: initial.tab === 'status', theme: getInitialTheme(), hasNavigatedAway: false,
     };
     this.loadMeters = this.loadMeters.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
     this.toggleTheme = this.toggleTheme.bind(this);
     this.handleDrillDown = this.handleDrillDown.bind(this);
+    this.navigate = this.navigate.bind(this);
+    this.onHashChange = this.onHashChange.bind(this);
   }
 
-  // Page 1 (Executive Summary) -> Page 3 (Reporting) drill-down handoff.
+  // The single place that changes screens — always updates both the URL
+  // hash (so refresh and browser Back/Forward work) and the in-memory
+  // state (for an instant UI update without waiting on the hashchange
+  // event to round-trip).
+  navigate(tab, drillDown = null) {
+    this.setState({ tab, drillDown, hasNavigatedAway: true, navCollapsed: tab === 'status' });
+    window.location.hash = buildHash(tab, drillDown);
+  }
+
+  // Page 1/2/4/Diagnostics -> Page 3 (Reporting) drill-down handoff.
   handleDrillDown(target) {
-    this.setState({ tab: 'reporting', drillDown: target });
+    this.navigate('reporting', target);
+  }
+
+  onHashChange() {
+    if (window.location.hash.startsWith('#/customer')) return;
+    const { tab, drillDown } = parseHash();
+    const resolvedTab = isValidTab(tab, this.state.session) ? tab : 'dashboard';
+    this.setState({ tab: resolvedTab, drillDown, navCollapsed: resolvedTab === 'status' });
   }
 
   componentDidMount() {
-    window.addEventListener('hashchange', () => this.forceUpdate());
+    window.addEventListener('hashchange', this.onHashChange);
     setUnauthorizedHandler(() => {
       api.logout();
       this.setState({ session: null });
     });
     if (this.state.session) this.loadMeters();
     document.documentElement.setAttribute('data-theme', this.state.theme);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('hashchange', this.onHashChange);
   }
 
   toggleTheme() {
@@ -91,7 +148,11 @@ class App extends React.Component {
   }
 
   handleLogin(session) { this.setState({ session, error: null }, this.loadMeters); }
-  handleLogout() { api.logout(); this.setState({ session: null, meters: [] }); }
+  handleLogout() {
+    api.logout();
+    this.setState({ session: null, meters: [], tab: 'dashboard', drillDown: null, hasNavigatedAway: false });
+    window.location.hash = '';
+  }
 
   loadMeters() {
     api.listMeters()
@@ -117,16 +178,7 @@ class App extends React.Component {
           <nav className="side-nav">
             {items.map(([key, label, icon]) => (
               <button key={key} className={tab === key ? 'active' : ''}
-                onClick={() => this.setState({
-                  tab: key,
-                  // NERC item 6: auto-collapse the sidebar on Feeder Status
-                  // for the wide table, and auto-restore it when leaving —
-                  // previously this only ever collapsed and never came
-                  // back, silently hiding the whole nav menu (including
-                  // Sign Out) on every other screen for the rest of the
-                  // session.
-                  navCollapsed: key === 'status',
-                })}>
+                onClick={() => this.navigate(key)}>
                 <span className="ico">{icon}</span>{label}
               </button>
             ))}
@@ -142,6 +194,12 @@ class App extends React.Component {
           <header className="topbar">
             <button className="nav-toggle" title="Show / hide menu"
               onClick={() => this.setState({ navCollapsed: !this.state.navCollapsed })}>☰</button>
+            {this.state.hasNavigatedAway && (
+              <button className="btn secondary" style={{ marginRight: 12 }}
+                title="Go back to the previous page" onClick={() => window.history.back()}>
+                ‹ Back
+              </button>
+            )}
             <h1>{(items.find(([k]) => k === tab) || [,''])[1]}</h1>
             <div className="topbar-right">
               <ThemeToggle theme={this.state.theme} onToggle={this.toggleTheme} />

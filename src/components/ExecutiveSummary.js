@@ -143,12 +143,11 @@ class ExecutiveSummary extends React.Component {
               <thead>
                 <tr><th>Disco</th><th>Feeders</th><th>Online</th><th>Offline</th>
                   <th>Avg D.A.R</th><th>Availability</th><th>Energy (kWh)</th>
-                  <th>Avg Load (kW)</th><th>Peak Load (kW)</th></tr>
+                  <th>Avg Load (kW)</th><th>Peak Load (kW)</th><th>Details</th></tr>
               </thead>
               <tbody>
                 {data.discos.map((d) => (
-                  <tr key={d.disco} onClick={() => this.drillInto(d.disco)} style={{ cursor: 'pointer' }}
-                    title="Open this Disco in Reporting">
+                  <tr key={d.disco}>
                     <td>{d.disco}</td>
                     <td>{d.feeders}</td>
                     <td style={{ color: '#2f9e44', fontWeight: 700 }}>{d.online}</td>
@@ -162,15 +161,19 @@ class ExecutiveSummary extends React.Component {
                     <td>{d.energyKwh.toLocaleString()}</td>
                     <td>{d.avgLoadKW != null ? d.avgLoadKW : '—'}</td>
                     <td>{d.peakLoadKW}</td>
+                    <td>
+                      <button className="btn secondary row-action-btn" onClick={() => this.drillInto(d.disco)}>
+                        View Details →
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {data.discos.length === 0 &&
-                  <tr><td colSpan="9" className="muted">No feeders match this filter.</td></tr>}
+                  <tr><td colSpan="10" className="muted">No feeders match this filter.</td></tr>}
               </tbody>
             </table>
           </div>
-          <p className="muted">Click a row to drill into that Disco's detail — this will open
-            the Reporting page pre-filtered to that Disco.</p>
+          <p className="muted">Use "View Details" on a row to open that Disco in Reporting.</p>
         </div>
 
         <div className="card">
@@ -201,12 +204,11 @@ class ExecutiveSummary extends React.Component {
               <thead>
                 <tr><th>Feeder</th><th>Disco</th><th>State</th><th>Voltage Level</th><th>Band</th>
                   <th>Connectivity</th><th>D.A.R</th><th>Availability</th>
-                  <th>Energy (kWh)</th><th>Avg Load (kW)</th><th>Peak Load (kW)</th></tr>
+                  <th>Energy (kWh)</th><th>Avg Load (kW)</th><th>Peak Load (kW)</th><th>Details</th></tr>
               </thead>
               <tbody>
                 {data.feederRows.map((f) => (
-                  <tr key={f.meterId} onClick={() => this.drillInto(f.disco, f.meterId)}
-                    style={{ cursor: 'pointer' }} title="Open this feeder in Reporting">
+                  <tr key={f.meterId}>
                     <td>{f.feeder}</td>
                     <td>{f.disco || '—'}</td>
                     <td>{f.state || '—'}</td>
@@ -222,10 +224,15 @@ class ExecutiveSummary extends React.Component {
                     <td>{f.energyKwh}</td>
                     <td>{f.avgLoadKW != null ? f.avgLoadKW : '—'}</td>
                     <td>{f.peakLoadKW != null ? f.peakLoadKW : '—'}</td>
+                    <td>
+                      <button className="btn secondary row-action-btn" onClick={() => this.drillInto(f.disco, f.meterId)}>
+                        View Details →
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {data.feederRows.length === 0 &&
-                  <tr><td colSpan="11" className="muted">No feeders match this filter.</td></tr>}
+                  <tr><td colSpan="12" className="muted">No feeders match this filter.</td></tr>}
               </tbody>
             </table>
           </div>

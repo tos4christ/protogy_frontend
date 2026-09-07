@@ -121,6 +121,7 @@ body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--
 }
 .theme-toggle:hover { background: var(--row-hover); }
 .topbar-user { font-size: 13px; color: var(--mut); font-weight: 600; white-space: nowrap; }
+.row-action-btn { padding: 4px 10px; font-size: 12px; white-space: nowrap; }
 
 /* ---------- Tables ---------- */
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; }

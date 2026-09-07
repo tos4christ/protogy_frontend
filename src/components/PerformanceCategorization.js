@@ -157,7 +157,7 @@ class PerformanceCategorization extends React.Component {
         <div className="card">
           <h2>By Feeder</h2>
           <p className="muted" style={{ marginTop: 0 }}>
-            Sorted worst-availability-first. Click a row to open that feeder in Reporting.
+            Sorted worst-availability-first. Use "View Details" on a row to open that feeder in Reporting.
           </p>
           <div className="controls">
             <label>Search
@@ -185,12 +185,11 @@ class PerformanceCategorization extends React.Component {
             <table className="data compact">
               <thead>
                 <tr><th>Feeder</th><th>Disco</th><th>Band</th><th>State</th><th>Voltage Level</th>
-                  <th>Required Hrs</th><th>Actual Hrs</th><th>Availability</th><th>Category</th></tr>
+                  <th>Required Hrs</th><th>Actual Hrs</th><th>Availability</th><th>Category</th><th>Details</th></tr>
               </thead>
               <tbody>
                 {data.feederRows.map((f) => (
-                  <tr key={f.meterId} onClick={() => this.drillInto(f.disco, f.meterId)} style={{ cursor: 'pointer' }}
-                    title="Open this feeder in Reporting">
+                  <tr key={f.meterId}>
                     <td>{f.feeder}</td>
                     <td>{f.disco || '—'}</td>
                     <td>{f.band || '—'}</td>
@@ -209,10 +208,15 @@ class PerformanceCategorization extends React.Component {
                       )}
                       {!f.category && '—'}
                     </td>
+                    <td>
+                      <button className="btn secondary row-action-btn" onClick={() => this.drillInto(f.disco, f.meterId)}>
+                        View Details →
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {data.feederRows.length === 0 &&
-                  <tr><td colSpan="9" className="muted">No feeders match this filter.</td></tr>}
+                  <tr><td colSpan="10" className="muted">No feeders match this filter.</td></tr>}
               </tbody>
             </table>
           </div>

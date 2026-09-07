@@ -143,7 +143,7 @@ class Diagnostics extends React.Component {
         <div className="card">
           <h2>Feeder Diagnostics</h2>
           <p className="muted" style={{ marginTop: 0 }}>
-            Sorted by most flags first. Click a row to open that feeder in Reporting.
+            Sorted by most flags first. Use "View Details" on a row to open that feeder in Reporting.
           </p>
           <div className="controls">
             <label>Search
@@ -171,12 +171,11 @@ class Diagnostics extends React.Component {
             <table className="data compact">
               <thead>
                 <tr><th>Feeder</th><th>Disco</th><th>Band</th><th>Connectivity</th>
-                  <th>Empty Buckets</th><th>Avg Latency (s)</th><th>Buffered</th><th>Flags</th></tr>
+                  <th>Empty Buckets</th><th>Avg Latency (s)</th><th>Buffered</th><th>Flags</th><th>Details</th></tr>
               </thead>
               <tbody>
                 {data.feederRows.map((f) => (
-                  <tr key={f.meterId} onClick={() => this.drillInto(f.disco, f.meterId)} style={{ cursor: 'pointer' }}
-                    title="Open this feeder in Reporting">
+                  <tr key={f.meterId}>
                     <td>{f.feeder}</td>
                     <td>{f.disco || '—'}</td>
                     <td>{f.band || '—'}</td>
@@ -195,10 +194,15 @@ class Diagnostics extends React.Component {
                       <Flag active={f.phaseImbalance} label="Phase Imbalance" />
                       {f.issueCount === 0 && <span className="muted">No issues</span>}
                     </td>
+                    <td>
+                      <button className="btn secondary row-action-btn" onClick={() => this.drillInto(f.disco, f.meterId)}>
+                        View Details →
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {data.feederRows.length === 0 &&
-                  <tr><td colSpan="8" className="muted">No feeders match this filter.</td></tr>}
+                  <tr><td colSpan="9" className="muted">No feeders match this filter.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -268,32 +272,42 @@ class Diagnostics extends React.Component {
               <h3 className="sub-h">Worst Power Factor</h3>
               <div className="table-wrap">
                 <table className="data compact">
-                  <thead><tr><th>Feeder</th><th>Disco</th><th>Band</th><th>Power Factor</th></tr></thead>
+                  <thead><tr><th>Feeder</th><th>Disco</th><th>Band</th><th>Power Factor</th><th>Details</th></tr></thead>
                   <tbody>
                     {pq.pf.poor.map((f) => (
-                      <tr key={f.meterId} onClick={() => this.drillInto(f.disco, f.meterId)} style={{ cursor: 'pointer' }}>
+                      <tr key={f.meterId}>
                         <td>{f.feeder}</td><td>{f.disco || '—'}</td><td>{f.band || '—'}</td>
                         <td style={{ color: '#d64545', fontWeight: 700 }}>{f.powerFactor}</td>
+                        <td>
+                          <button className="btn secondary row-action-btn" onClick={() => this.drillInto(f.disco, f.meterId)}>
+                            View Details →
+                          </button>
+                        </td>
                       </tr>
                     ))}
                     {pq.pf.poor.length === 0 &&
-                      <tr><td colSpan="4" className="muted">No feeders below the poor-PF threshold.</td></tr>}
+                      <tr><td colSpan="5" className="muted">No feeders below the poor-PF threshold.</td></tr>}
                   </tbody>
                 </table>
               </div>
               <h3 className="sub-h">Worst Phase Current Imbalance</h3>
               <div className="table-wrap">
                 <table className="data compact">
-                  <thead><tr><th>Feeder</th><th>Disco</th><th>Band</th><th>Imbalance</th></tr></thead>
+                  <thead><tr><th>Feeder</th><th>Disco</th><th>Band</th><th>Imbalance</th><th>Details</th></tr></thead>
                   <tbody>
                     {pq.imbalance.worst.map((f) => (
-                      <tr key={f.meterId} onClick={() => this.drillInto(f.disco, f.meterId)} style={{ cursor: 'pointer' }}>
+                      <tr key={f.meterId}>
                         <td>{f.feeder}</td><td>{f.disco || '—'}</td><td>{f.band || '—'}</td>
                         <td style={{ color: '#d64545', fontWeight: 700 }}>{f.imbalancePct}%</td>
+                        <td>
+                          <button className="btn secondary row-action-btn" onClick={() => this.drillInto(f.disco, f.meterId)}>
+                            View Details →
+                          </button>
+                        </td>
                       </tr>
                     ))}
                     {pq.imbalance.worst.length === 0 &&
-                      <tr><td colSpan="4" className="muted">No feeders above the imbalance threshold.</td></tr>}
+                      <tr><td colSpan="5" className="muted">No feeders above the imbalance threshold.</td></tr>}
                   </tbody>
                 </table>
               </div>

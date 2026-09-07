@@ -168,10 +168,11 @@ const api = {
     if (search) qs.push(`search=${encodeURIComponent(search)}`);
     return j(`/nerc/reporting-feeders${qs.length ? `?${qs.join('&')}` : ''}`);
   },
-  reportingDetail: (meterId, from, to) => {
+  reportingDetail: (meterId, from, to, resolution) => {
     const qs = [`meterId=${encodeURIComponent(meterId)}`];
     if (from) qs.push(`from=${from}`);
     if (to) qs.push(`to=${to}`);
+    if (resolution) qs.push(`resolution=${encodeURIComponent(resolution)}`);
     return j(`/nerc/reporting-detail?${qs.join('&')}`);
   },
   performanceCategorization: (filters) => {

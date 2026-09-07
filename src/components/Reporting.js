@@ -15,9 +15,21 @@ const dayTime = (t) => new Date(t).toLocaleString([], { month: '2-digit', day: '
 // time-only is ambiguous once a range spans more than one day.
 function intradayLabel(t, bucket) {
   if (bucket === '1 day') return shortDay(new Date(t).toISOString().slice(0, 10));
-  if (bucket === '1 hour') return dayTime(t);
+  if (bucket === '1 hour' || bucket === '30 minutes') return dayTime(t);
   return shortTime(t);
 }
+// Resolution options and the maximum date-range span each one allows —
+// mirrors the backend's whitelist exactly. A finer resolution collapses
+// the maximum viewable range; a coarser one allows a wider one.
+const RESOLUTIONS = [
+  { value: '1 minute', label: '1 minute', maxDays: 1 },
+  { value: '5 minutes', label: '5 minutes', maxDays: 3 },
+  { value: '15 minutes', label: '15 minutes', maxDays: 7 },
+  { value: '30 minutes', label: '30 minutes', maxDays: 14 },
+  { value: '1 hour', label: '1 hour', maxDays: 92 },
+];
+const maxDaysFor = (resolution) => (RESOLUTIONS.find((r) => r.value === resolution) || RESOLUTIONS[2]).maxDays;
+const addDays = (dateStr, n) => { const d = new Date(dateStr + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
 function Tile({ value, label }) {
   return (
@@ -59,7 +71,7 @@ class Reporting extends React.Component {
       disco: dd.disco || 'all', band: dd.band || 'all',
       state: dd.state || 'all', voltageClass: dd.voltageClass || 'all', search: '',
       meterId: dd.meterId || '',
-      from: daysAgo(6), to: yesterday(),
+      resolution: '15 minutes', from: daysAgo(6), to: yesterday(),
       detail: null, error: null, loadingFeeders: true,
     };
     this.loadFeeders = this.loadFeeders.bind(this);
@@ -94,11 +106,30 @@ class Reporting extends React.Component {
   }
 
   loadDetail() {
-    const { meterId, from, to } = this.state;
+    const { meterId, from, to, resolution } = this.state;
     if (!meterId) return;
-    api.reportingDetail(meterId, from, to)
-      .then((detail) => this.setState({ detail, error: null }))
+    api.reportingDetail(meterId, from, to, resolution)
+      .then((detail) => this.setState({
+        detail, error: null,
+        // The backend may have clamped the range to fit the selected
+        // resolution — sync the date inputs to whatever was actually used
+        // so the picker never silently disagrees with the charts below it.
+        from: detail.from, to: detail.to,
+      }))
       .catch((e) => this.setState({ error: e.message }));
+  }
+
+  // Changing resolution can shrink the maximum viewable range — clamp the
+  // "from" date locally first so the picker updates immediately, then
+  // reload (the backend enforces the same cap regardless).
+  onResolutionChange(resolution) {
+    const { to } = this.state;
+    const maxDays = maxDaysFor(resolution);
+    this.setState((prev) => {
+      const spanDays = Math.round((new Date(prev.to) - new Date(prev.from)) / 86400000) + 1;
+      const from = spanDays > maxDays ? addDays(prev.to, -(maxDays - 1)) : prev.from;
+      return { resolution, from };
+    }, this.loadDetail);
   }
 
   onFilterChange(patch) {
@@ -180,6 +211,11 @@ class Reporting extends React.Component {
                 ))}
               </select>
             </label>
+            <label>Resolution
+              <select value={this.state.resolution} onChange={(e) => this.onResolutionChange(e.target.value)}>
+                {RESOLUTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </label>
             <label>From
               <input type="date" value={from} max={to} onChange={(e) => this.onDateChange({ from: e.target.value })} />
             </label>
@@ -190,6 +226,11 @@ class Reporting extends React.Component {
               Download CSV
             </button>
           </div>
+          <p className="muted" style={{ marginTop: 0 }}>
+            A finer resolution caps the maximum range you can view at once — 1 minute allows up
+            to {maxDaysFor('1 minute')} day, 1 hour allows up to {maxDaysFor('1 hour')} days.
+            Pick a coarser resolution first if you want to view a wider date range.
+          </p>
           {loadingFeeders && <p className="muted">Loading matching feeders…</p>}
           {error && <div className="error">{error}</div>}
         </div>
@@ -225,10 +266,11 @@ class Reporting extends React.Component {
             <div className="card">
               <h2>Voltage ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}
+                  margin={{ top: 10, right: 16, left: 8, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
-                  <YAxis unit=" kV" />
+                  <YAxis unit=" kV" width={72} />
                   <Tooltip /><Legend />
                   <Line isAnimationActive={false} dataKey="v1" name="V L1" stroke="#d64545" dot={false} />
                   <Line isAnimationActive={false} dataKey="v2" name="V L2" stroke="#e8a80c" dot={false} />
@@ -240,10 +282,11 @@ class Reporting extends React.Component {
             <div className="card">
               <h2>Current ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}
+                  margin={{ top: 10, right: 16, left: 8, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
-                  <YAxis unit=" A" />
+                  <YAxis unit=" A" width={68} />
                   <Tooltip /><Legend />
                   <Line isAnimationActive={false} dataKey="i1" name="I L1" stroke="#d64545" dot={false} />
                   <Line isAnimationActive={false} dataKey="i2" name="I L2" stroke="#e8a80c" dot={false} />
@@ -255,10 +298,11 @@ class Reporting extends React.Component {
             <div className="card">
               <h2>Active, Reactive &amp; Apparent Power ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}
+                  margin={{ top: 10, right: 16, left: 8, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
-                  <YAxis unit=" kW" />
+                  <YAxis unit=" kW" width={78} />
                   <Tooltip /><Legend />
                   <Line isAnimationActive={false} dataKey="p" name="Active" stroke="#2f9e44" strokeWidth={2} dot={false} />
                   <Line isAnimationActive={false} dataKey="q" name="Reactive" stroke="#e8a80c" dot={false} />
@@ -270,11 +314,12 @@ class Reporting extends React.Component {
             <div className="card">
               <h2>Frequency &amp; Power Factor ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}>
+                <LineChart data={detail.intraday.map((r) => ({ ...r, label: intradayLabel(r.t, detail.intradayBucket) }))}
+                  margin={{ top: 10, right: 16, left: 8, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={30} />
-                  <YAxis yAxisId="hz" domain={[45, 55]} unit=" Hz" />
-                  <YAxis yAxisId="pf" orientation="right" domain={[0, 1]} />
+                  <YAxis yAxisId="hz" domain={[45, 55]} unit=" Hz" width={62} />
+                  <YAxis yAxisId="pf" orientation="right" domain={[0, 1]} width={50} />
                   <Tooltip /><Legend />
                   <Line isAnimationActive={false} yAxisId="hz" dataKey="freq" name="Frequency" stroke="#1653a1" dot={false} />
                   <Line isAnimationActive={false} yAxisId="pf" dataKey="pf" name="Power Factor" stroke="#e8452c" dot={false} />
@@ -285,10 +330,11 @@ class Reporting extends React.Component {
             <div className="card">
               <h2>Load Flow ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={detail.trend.map((r) => ({ ...r, label: shortDay(r.day) }))}>
+                <LineChart data={detail.trend.map((r) => ({ ...r, label: shortDay(r.day) }))}
+                  margin={{ top: 10, right: 16, left: 8, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis unit=" kW" />
+                  <YAxis unit=" kW" width={78} />
                   <Tooltip /><Legend />
                   <Line isAnimationActive={false} dataKey="avgLoadKW" name="Avg Load" stroke="#1653a1" dot />
                   <Line isAnimationActive={false} dataKey="peakLoadKW" name="Peak Load" stroke="#d64545" dot />
@@ -299,10 +345,11 @@ class Reporting extends React.Component {
             <div className="card">
               <h2>Energy ({detail.from} to {detail.to})</h2>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={detail.trend.map((r) => ({ ...r, label: shortDay(r.day) }))}>
+                <LineChart data={detail.trend.map((r) => ({ ...r, label: shortDay(r.day) }))}
+                  margin={{ top: 10, right: 16, left: 8, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis unit=" kWh" />
+                  <YAxis unit=" kWh" width={82} />
                   <Tooltip />
                   <Line isAnimationActive={false} dataKey="energyKwh" name="Energy" stroke="#2f9e44" strokeWidth={2} dot />
                 </LineChart>

@@ -34,16 +34,31 @@ const api = {
     localStorage.setItem('protogy_token', data.token);
     localStorage.setItem('protogy_user', data.username);
     localStorage.setItem('protogy_role', data.role);
+    localStorage.setItem('protogy_account_type', data.accountType || '');
+    localStorage.setItem('protogy_disco', data.disco || '');
+    localStorage.setItem('protogy_states', data.states ? JSON.stringify(data.states) : '');
     return data;
   },
   logout: () => {
     localStorage.removeItem('protogy_token');
     localStorage.removeItem('protogy_user');
     localStorage.removeItem('protogy_role');
+    localStorage.removeItem('protogy_account_type');
+    localStorage.removeItem('protogy_disco');
+    localStorage.removeItem('protogy_states');
   },
-  session: () => (token()
-    ? { username: localStorage.getItem('protogy_user'), role: localStorage.getItem('protogy_role') }
-    : null),
+  session: () => {
+    if (!token()) return null;
+    let states = null;
+    try { states = JSON.parse(localStorage.getItem('protogy_states') || 'null'); } catch (e) { /* ignore */ }
+    return {
+      username: localStorage.getItem('protogy_user'),
+      role: localStorage.getItem('protogy_role'),
+      accountType: localStorage.getItem('protogy_account_type') || null,
+      disco: localStorage.getItem('protogy_disco') || null,
+      states,
+    };
+  },
 
   health: () => j('/health'),
   nercSummary: (disco, band) => {
@@ -146,10 +161,21 @@ const api = {
     body: JSON.stringify({ meterSerial, tariffNairaPerKwh }),
   }),
   listUsers: () => j('/auth/users'),
-  createUser: (username, password, role) => j('/auth/users', {
+  // body: { username, password, accountType, disco?, states?, fullName? }
+  createUser: (body) => j('/auth/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, role }),
+    body: JSON.stringify(body),
+  }),
+  setUserStatus: (username, active) => j(`/auth/users/${encodeURIComponent(username)}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  }),
+  resetUserPassword: (username, password) => j(`/auth/users/${encodeURIComponent(username)}/password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
   }),
   deleteUser: (username) => j(`/auth/users/${encodeURIComponent(username)}`, { method: 'DELETE' }),
 

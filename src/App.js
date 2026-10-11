@@ -113,6 +113,7 @@ class App extends React.Component {
     this.handleDrillDown = this.handleDrillDown.bind(this);
     this.navigate = this.navigate.bind(this);
     this.onHashChange = this.onHashChange.bind(this);
+    this.onStorageChange = this.onStorageChange.bind(this);
   }
 
   // The single place that changes screens — always updates both the URL
@@ -138,9 +139,19 @@ class App extends React.Component {
 
   componentDidMount() {
     window.addEventListener('hashchange', this.onHashChange);
+    window.addEventListener('storage', this.onStorageChange);
+    // A 401 (expired/invalid token) used to only clear `session` - it left
+    // the URL hash (e.g. "#/nerc?disco=BEDC" from a drill-down) and the
+    // in-memory tab/drillDown/meters state untouched. Whoever logged in
+    // next - possibly a completely different account on a shared machine -
+    // would inherit that leftover tab and drill-down target (e.g. the NERC
+    // View pre-seeded with someone else's DisCo), which is exactly the kind
+    // of "Account A showing Account B's filter" cross-talk this now avoids
+    // by resetting everything handleLogout already resets.
     setUnauthorizedHandler(() => {
       api.logout();
-      this.setState({ session: null });
+      this.setState({ session: null, meters: [], tab: 'dashboard', drillDown: null, hasNavigatedAway: false });
+      window.location.hash = '';
     });
     if (this.state.session) this.loadMeters();
     document.documentElement.setAttribute('data-theme', this.state.theme);
@@ -148,6 +159,23 @@ class App extends React.Component {
 
   componentWillUnmount() {
     window.removeEventListener('hashchange', this.onHashChange);
+    window.removeEventListener('storage', this.onStorageChange);
+  }
+
+  // Fires when ANOTHER tab/window on this same browser changes localStorage
+  // (api.login()/api.logout() both write there). api.js always reads the
+  // token fresh from localStorage on every request, so without this, a tab
+  // left open on Account A keeps showing A's username and A's
+  // already-fetched "locked" scope labels in its chrome while its next
+  // 30-second poll silently starts authenticating as whichever account just
+  // logged in over in Tab B - the screen says one account, the data on it
+  // is another's. A full reload is the simplest fix that can't leave any
+  // stale component state (filters, cached discos/states lists, etc.)
+  // behind from the account this tab used to be signed in as.
+  onStorageChange(e) {
+    if (e.key === 'protogy_token' || e.key === 'protogy_user') {
+      window.location.reload();
+    }
   }
 
   toggleTheme() {
@@ -157,7 +185,13 @@ class App extends React.Component {
     this.setState({ theme });
   }
 
-  handleLogin(session) { this.setState({ session, error: null }, this.loadMeters); }
+  handleLogin(session) {
+    // Start every fresh login on a clean tab/hash - never inherit a
+    // drill-down target (e.g. "#/nerc?disco=BEDC") left over from whoever
+    // was signed in here before, in this tab or session.
+    window.location.hash = '';
+    this.setState({ session, error: null, tab: 'dashboard', drillDown: null, hasNavigatedAway: false }, this.loadMeters);
+  }
   handleLogout() {
     api.logout();
     this.setState({ session: null, meters: [], tab: 'dashboard', drillDown: null, hasNavigatedAway: false });

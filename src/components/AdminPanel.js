@@ -204,7 +204,7 @@ class AdminPanel extends React.Component {
         <div className="card">
           <h2>Users</h2>
           {s.error && <div className="error">{s.error}</div>}
-          {s.notice && <div className="card" style={{ background: '#eef8f0' }}>{s.notice}</div>}
+          {s.notice && <div className="card notice">{s.notice}</div>}
 
           <form onSubmit={this.handleCreate}>
             <div className="controls">

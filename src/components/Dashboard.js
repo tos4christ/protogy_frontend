@@ -4,6 +4,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Legend,
 } from 'recharts';
 import api from '../api';
+import ScopeFilter from './ScopeFilter';
 import GuidedTour, { TourRestartButton } from './GuidedTour';
 import { dashboardTour } from '../tours';
 
@@ -93,15 +94,10 @@ class Dashboard extends React.Component {
             <TourRestartButton onClick={() => this.tourRef.current.start()} label="" />
           </h2>
           <div className="controls" data-tour="dash-filters">
-            <label>Disco
-              <select value={disco}
-                onChange={(e) => this.setFilter({ disco: e.target.value })}>
-                <option value="all">All Discos</option>
-                {discos.map((d) => (
-                  <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>
-                ))}
-              </select>
-            </label>
+            <ScopeFilter label="Disco" value={disco} options={discos}
+              allLabel="All Discos" getValue={(d) => d.disco}
+              getLabel={(d) => `${d.disco} (${d.feeders})`}
+              onChange={(v) => this.setFilter({ disco: v })} />
             <label>Band
               <select value={band}
                 onChange={(e) => this.setFilter({ band: e.target.value })}>

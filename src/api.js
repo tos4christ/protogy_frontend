@@ -178,6 +178,28 @@ const api = {
     body: JSON.stringify({ password }),
   }),
   deleteUser: (username) => j(`/auth/users/${encodeURIComponent(username)}`, { method: 'DELETE' }),
+  auditLog: (filters) => {
+    const { username, action, from, to, limit } = filters || {};
+    const qs = [];
+    if (username) qs.push(`username=${encodeURIComponent(username)}`);
+    if (action && action !== 'all') qs.push(`action=${encodeURIComponent(action)}`);
+    if (from) qs.push(`from=${from}`);
+    if (to) qs.push(`to=${to}`);
+    if (limit) qs.push(`limit=${limit}`);
+    return j(`/auth/audit-log${qs.length ? `?${qs.join('&')}` : ''}`);
+  },
+  // token passed as query param, same reason as downloadUrl below -
+  // <a download> can't send an Authorization header.
+  auditLogDownloadUrl: (filters) => {
+    const { username, action, from, to } = filters || {};
+    const qs = [];
+    if (username) qs.push(`username=${encodeURIComponent(username)}`);
+    if (action && action !== 'all') qs.push(`action=${encodeURIComponent(action)}`);
+    if (from) qs.push(`from=${from}`);
+    if (to) qs.push(`to=${to}`);
+    qs.push(`token=${encodeURIComponent(token())}`);
+    return `${BASE}/auth/audit-log/download?${qs.join('&')}`;
+  },
 
   listMeters: (disco) => j('/meters' + (disco && disco !== 'all' ? `?disco=${encodeURIComponent(disco)}` : '')),
   listDiscos: () => j('/discos'),

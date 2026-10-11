@@ -444,7 +444,7 @@ class MeterExplorer extends React.Component {
           )}
           {this.renderControls()}
           {error && <div className="error">{error}</div>}
-          {notice && <div className="card" style={{ background: '#eef8f0' }}>{notice}</div>}
+          {notice && <div className="card notice">{notice}</div>}
           <div data-tour="exp-content" style={{ minHeight: 40 }}>
             {meterId && view === 'data' && this.renderData()}
             {meterId && view === 'dar' && this.renderDar()}

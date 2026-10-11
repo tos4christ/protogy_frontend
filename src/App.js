@@ -14,6 +14,7 @@ import SbtScorecard from './components/SbtScorecard';
 import LeagueTable from './components/LeagueTable';
 import Settings from './components/Settings';
 import AdminPanel from './components/AdminPanel';
+import AuditLog from './components/AuditLog';
 import Login from './components/Login';
 import Clock from './components/Clock';
 import CustomerPortal from './components/CustomerPortal';
@@ -43,7 +44,11 @@ const NAV = [
   ['reporting', 'Reporting', '▥'],
   ['categorization', 'Performance Categorization', '▧'],
   ['diagnostics', 'Diagnostics', '⚠'],
-  ['nerc', 'NERC View', '◈'],
+  // NERC View is the regulator's own compliance view - unlike every other
+  // tab here, a DisCo account doesn't get a scoped-down version of it, it
+  // doesn't get it at all. `excludeAccountTypes` is a 5th, optional NAV
+  // entry checked alongside the existing 4th ('admin'-role) entry below.
+  ['nerc', 'NERC View', '◈', undefined, ['disco']],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
   ['map', 'Eagle Eye', '◎', 'admin'],
@@ -51,6 +56,7 @@ const NAV = [
   ['explorer', 'Feeder Explorer', '⌕'],
   ['onboard', 'Onboard Meter', '⊕', 'admin'],
   ['admin', 'Administration', '⚙', 'admin'],
+  ['audit', 'Audit Log', '📜', 'admin'],
   ['settings', 'Settings', '⚒', 'admin'],
 ];
 
@@ -77,12 +83,16 @@ function buildHash(tab, drillDown) {
   return h;
 }
 // Guards against a stale/bookmarked hash pointing to a tab that doesn't
-// exist, or an admin-only tab opened by a non-admin session.
+// exist, an admin-only tab opened by a non-admin session, or a tab (NERC
+// View) excluded for this session's accountType (e.g. a DisCo account
+// typing #/nerc directly).
 function isValidTab(tab, session) {
   const item = NAV.find(([k]) => k === tab);
   if (!item) return false;
-  const role = item[3];
-  return !role || (session && session.role === role);
+  const [, , , role, excludeAccountTypes] = item;
+  if (role && !(session && session.role === role)) return false;
+  if (excludeAccountTypes && session && excludeAccountTypes.includes(session.accountType)) return false;
+  return true;
 }
 
 class App extends React.Component {
@@ -166,7 +176,11 @@ class App extends React.Component {
     const { session, tab, meters, error } = this.state;
     if (!session) return <Login onLogin={this.handleLogin} />;
 
-    const items = NAV.filter(([, , , role]) => !role || session.role === 'admin');
+    const items = NAV.filter(([, , , role, excludeAccountTypes]) => {
+      if (role && session.role !== 'admin') return false;
+      if (excludeAccountTypes && excludeAccountTypes.includes(session.accountType)) return false;
+      return true;
+    });
 
     return (
       <div className={"shell" + (this.state.navCollapsed ? " nav-collapsed" : "")}>
@@ -217,7 +231,8 @@ class App extends React.Component {
             {tab === 'dar-history' && <DarHistory />}
             {tab === 'reporting' && <Reporting drillDown={this.state.drillDown} />}
             {tab === 'categorization' && <PerformanceCategorization drillDown={this.state.drillDown} onDrillDown={this.handleDrillDown} />}
-            {tab === 'nerc' && <NercDashboard initialDisco={this.state.drillDown && this.state.drillDown.disco} />}
+            {tab === 'nerc' && session.accountType !== 'disco' &&
+              <NercDashboard initialDisco={this.state.drillDown && this.state.drillDown.disco} />}
             {tab === 'sbt' && <SbtScorecard />}
             {tab === 'league' && <LeagueTable />}
             {tab === 'diagnostics' && <Diagnostics drillDown={this.state.drillDown} onDrillDown={this.handleDrillDown} />}
@@ -229,6 +244,7 @@ class App extends React.Component {
             {tab === 'onboard' && session.role === 'admin' &&
               <OnboardMeter onOnboarded={this.loadMeters} />}
             {tab === 'admin' && session.role === 'admin' && <AdminPanel />}
+            {tab === 'audit' && session.role === 'admin' && <AuditLog />}
             {tab === 'settings' && session.role === 'admin' && <Settings />}
           </main>
         </div>

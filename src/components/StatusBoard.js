@@ -1,5 +1,6 @@
 import React from 'react';
 import api from '../api';
+import ScopeFilter from './ScopeFilter';
 
 // NERC item 4: last reading as "minutes ago"
 function minutesAgo(ts) {
@@ -141,15 +142,10 @@ class StatusBoard extends React.Component {
             <button key={f} className={'btn ' + (filter === f ? '' : 'secondary')}
               onClick={() => this.setFilter({ filter: f })}>{f.toUpperCase()}</button>
           ))}
-          <label>Disco
-            <select value={disco}
-              onChange={(e) => this.setFilter({ disco: e.target.value })}>
-              <option value="all">All Discos</option>
-              {discos.map((d) => (
-                <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>
-              ))}
-            </select>
-          </label>
+          <ScopeFilter label="Disco" value={disco} options={discos}
+            allLabel="All Discos" getValue={(d) => d.disco}
+            getLabel={(d) => `${d.disco} (${d.feeders})`}
+            onChange={(v) => this.setFilter({ disco: v })} />
           <label>Band
             <select value={band}
               onChange={(e) => this.setFilter({ band: e.target.value })}>

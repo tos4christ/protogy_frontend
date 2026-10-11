@@ -1,5 +1,6 @@
 import React from 'react';
 import api from '../api';
+import ScopeFilter from './ScopeFilter';
 
 const PAGE_SIZES = [25, 50, 100, 250];
 const thisMonthDefault = () => {
@@ -89,18 +90,14 @@ class PerformanceCategorization extends React.Component {
               <input type="month" value={month}
                 onChange={(e) => this.onFilterChange({ month: e.target.value })} />
             </label>
-            <label>Disco
-              <select value={disco} onChange={(e) => this.onFilterChange({ disco: e.target.value })}>
-                <option value="all">All Discos</option>
-                {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco} ({d.feeders})</option>)}
-              </select>
-            </label>
-            <label>State
-              <select value={state} onChange={(e) => this.onFilterChange({ state: e.target.value })}>
-                <option value="all">All States</option>
-                {states.map((s) => <option key={s.state} value={s.state}>{s.state} ({s.feeders})</option>)}
-              </select>
-            </label>
+            <ScopeFilter label="Disco" value={disco} options={discos}
+              allLabel="All Discos" getValue={(d) => d.disco}
+              getLabel={(d) => `${d.disco} (${d.feeders})`}
+              onChange={(v) => this.onFilterChange({ disco: v })} />
+            <ScopeFilter label="State" value={state} options={states}
+              allLabel="All States" getValue={(s) => s.state}
+              getLabel={(s) => `${s.state} (${s.feeders})`}
+              onChange={(v) => this.onFilterChange({ state: v })} />
             <label>Voltage Level
               <select value={voltageClass} onChange={(e) => this.onFilterChange({ voltageClass: e.target.value })}>
                 <option value="all">All Voltage Levels</option>

@@ -2,6 +2,7 @@ import React from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../api';
+import ScopeFilter from './ScopeFilter';
 
 const CONN_COLORS = { online: '#2f9e44', offline: '#d64545', never_reported: '#8a97a5' };
 const BAND_COLORS = { A: '#1653a1', B: '#2f9e44', C: '#e8a80c', D: '#d9720a', E: '#d64545' };
@@ -74,13 +75,9 @@ class MapView extends React.Component {
       <div className="card map-card">
         <h2>Feeder Map <span className="live-dot" title="Auto-refreshing"></span></h2>
         <div className="controls">
-          <label>Disco
-            <select value={disco}
-              onChange={(e) => this.setState({ disco: e.target.value, sbt: null }, this.load)}>
-              <option value="all">All Discos</option>
-              {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco}</option>)}
-            </select>
-          </label>
+          <ScopeFilter label="Disco" value={disco} options={discos}
+            allLabel="All Discos" getValue={(d) => d.disco} getLabel={(d) => d.disco}
+            onChange={(v) => this.setState({ disco: v, sbt: null }, this.load)} />
           <label>Colour by
             <select value={mode} onChange={(e) => this.setMode(e.target.value)}>
               <option value="connectivity">Connectivity</option>

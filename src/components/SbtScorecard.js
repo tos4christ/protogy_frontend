@@ -1,5 +1,6 @@
 import React from 'react';
 import api from '../api';
+import ScopeFilter from './ScopeFilter';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const ngn = (v) => (v == null ? '—' : '₦' + Number(v).toLocaleString());
@@ -71,13 +72,9 @@ class SbtScorecard extends React.Component {
               <input type="date" value={date}
                 onChange={(e) => this.setState({ date: e.target.value }, this.load)} />
             </label>
-            <label>Disco
-              <select value={disco}
-                onChange={(e) => this.setState({ disco: e.target.value }, this.load)}>
-                <option value="all">All Discos</option>
-                {discos.map((d) => <option key={d.disco} value={d.disco}>{d.disco}</option>)}
-              </select>
-            </label>
+            <ScopeFilter label="Disco" value={disco} options={discos}
+              allLabel="All Discos" getValue={(d) => d.disco} getLabel={(d) => d.disco}
+              onChange={(v) => this.setState({ disco: v }, this.load)} />
             <label>Band
               <select value={band}
                 onChange={(e) => this.setState({ band: e.target.value }, this.load)}>

@@ -60,7 +60,7 @@ class OnboardMeter extends React.Component {
         </p>
         {s.error && <div className="error">{s.error}</div>}
         {s.result && (
-          <div className="card" style={{ background: '#eef8f0' }}>
+          <div className="card notice">
             Meter <b>{s.result.meter_id}</b> onboarded as feeder{' '}
             <b>{s.result.feeder_name}</b> (status: <span className={'badge ' + s.result.status}>{s.result.status}</span>)
           </div>

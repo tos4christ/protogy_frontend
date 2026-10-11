@@ -17,6 +17,7 @@
   --row-alt: #f6f9fc; --row-hover: #eaf5fb;
   --stat-grad-1: #f7fafc; --stat-grad-2: #eef4f9;
   --error-bg: #fde2e1; --error-fg: #b02a37;
+  --notice-bg: #e3f6e8; --notice-fg: #1c6b33;
   --table-border: #cdd8e2; --table-border-strong: #33506b;
   --dar-track: #e4ebf1;
   --shadow-1: rgba(10,36,56,.07); --shadow-2: rgba(10,36,56,.18);
@@ -37,6 +38,7 @@
   --row-alt: #1e2e3d; --row-hover: #24384a;
   --stat-grad-1: #1c2b3a; --stat-grad-2: #16232f;
   --error-bg: #4a2020; --error-fg: #ff8a80;
+  --notice-bg: #1d3a26; --notice-fg: #7bdb98;
   --table-border: #33465a; --table-border-strong: #4a6178;
   --dar-track: #26374a;
   --shadow-1: rgba(0,0,0,.35); --shadow-2: rgba(0,0,0,.45);
@@ -107,6 +109,11 @@ body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--
   min-width: 150px; background: var(--input-bg); color: var(--ink); font-family: inherit;
 }
 .controls input:focus, .controls select:focus { outline: 2px solid rgba(126,200,227,.55); border-color: var(--blue); }
+.locked-filter {
+  padding: 9px 11px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 14px;
+  min-width: 150px; background: var(--input-bg); color: var(--ink); font-family: inherit;
+  opacity: .75; cursor: not-allowed; white-space: nowrap;
+}
 .btn {
   background: linear-gradient(180deg, #10598f, #0b3d61); color: #fff; border: none;
   padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
@@ -156,6 +163,10 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 
 /* ---------- Misc ---------- */
 .error { background: var(--error-bg); color: var(--error-fg); padding: 11px 15px; border-radius: 8px; margin-bottom: 12px; }
+/* Success/confirmation banners (e.g. "User saved.") — same shape as .error,
+   theme-aware colors instead of the old hardcoded near-white inline style
+   that went unreadable in dark mode (light text on a light background). */
+.card.notice { background: var(--notice-bg); color: var(--notice-fg); }
 .pager { display: flex; gap: 10px; align-items: center; margin-top: 12px; font-size: 14px; flex-wrap: wrap; }
 .muted { color: var(--mut); font-size: 13px; }
 .dar-bar { background: var(--dar-track); border-radius: 4px; height: 14px; width: 140px; display: inline-block; vertical-align: middle; }

@@ -131,7 +131,7 @@ class BuyCredit extends React.Component {
         <h2>Buy Credit — {this.props.serial}</h2>
         {s.error && <div className="error">{s.error}</div>}
         {s.result && (
-          <div className="card" style={{ background: '#eef8f0' }}>
+          <div className="card notice">
             <b>Purchase successful!</b><br />
             {s.result.kwh} kWh for ₦{s.result.amountNaira}<br />
             Token: <span className="vend-token">{s.result.token.replace(/(\d{4})(?=\d)/g, '$1-')}</span>
@@ -186,7 +186,7 @@ class ApplyToken extends React.Component {
           onto your meter (same as typing it on the meter keypad).</p>
         {s.error && <div className="error">{s.error}</div>}
         {s.result && (
-          <div className="card" style={{ background: '#eef8f0' }}>
+          <div className="card notice">
             <b>Credit loaded!</b> +{s.result.kwhAdded} kWh —
             new balance <b>{s.result.newBalanceKwh} kWh</b>.
           </div>

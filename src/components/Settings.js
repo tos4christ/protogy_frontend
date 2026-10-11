@@ -73,7 +73,7 @@ class Settings extends React.Component {
         <p className="muted">These thresholds drive the NERC dashboard tiles, the executive
           summary, and the Met/Not Met status in Excel reports.</p>
         {error && <div className="error">{error}</div>}
-        {notice && <div className="card" style={{ background: '#eef8f0' }}>{notice}</div>}
+        {notice && <div className="card notice">{notice}</div>}
         {values && (
           <form onSubmit={this.save}>
             <div className="controls" style={{ flexDirection: 'column', alignItems: 'stretch' }}>

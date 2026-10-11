@@ -254,6 +254,8 @@ const api = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }),
+  feederRegistryLookup: (disco, feeder) =>
+    j(`/feeder-registry/lookup?disco=${encodeURIComponent(disco)}&feeder=${encodeURIComponent(feeder)}`),
   meterStatus: (filter, disco, band, page, limit) => {
     const qs = [`filter=${filter}`];
     if (disco && disco !== 'all') qs.push(`disco=${encodeURIComponent(disco)}`);

@@ -10,18 +10,53 @@ class OnboardMeter extends React.Component {
     this.state = {
       meterId: '', feederName: '', location: '', intervalSeconds: 15, controllerId: '', disco: '', latitude: '', longitude: '',
       station: '', motherFeeder: '', category: '', state: '', voltageClass: '', nominalVoltage: '', tariffBand: '',
+      feederType: '', regulator: '',
       user: '', busy: false, result: null, error: null,
+      lookupBusy: false, lookupMsg: null,
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleLookup = this.handleLookup.bind(this);
   }
 
   handleChange(e) { this.setState({ [e.target.name]: e.target.value }); }
 
+  // Pull Band/State/Regulator/Voltage/FeederType from the Commission's NESI
+  // feeder registry (migrations/002_feeder_registry.sql) by disco + feeder
+  // name, so staff don't have to type these in blind. Reference data only —
+  // never overwrites fields the user already typed themselves.
+  handleLookup() {
+    const { disco, feederName } = this.state;
+    if (!disco.trim() || !feederName.trim()) {
+      this.setState({ lookupMsg: 'Enter Disco and Feeder Name first.' });
+      return;
+    }
+    this.setState({ lookupBusy: true, lookupMsg: null });
+    api.feederRegistryLookup(disco.trim(), feederName.trim())
+      .then((r) => {
+        this.setState((prev) => ({
+          lookupBusy: false,
+          lookupMsg: `Matched registry: ${r.feeder} (${r.disco}).`,
+          state: prev.state || r.state || '',
+          voltageClass: prev.voltageClass || r.voltage_level || '',
+          tariffBand: prev.tariffBand || r.band || '',
+          feederType: prev.feederType || r.feeder_type || '',
+          regulator: prev.regulator || r.regulator || '',
+        }));
+      })
+      .catch((err) => this.setState({
+        lookupBusy: false,
+        lookupMsg: err.message.includes('no match')
+          ? 'No match in the feeder registry for that Disco/Feeder Name — enter details manually.'
+          : `Lookup failed: ${err.message}`,
+      }));
+  }
+
   handleSubmit(e) {
     e.preventDefault();
     const { meterId, feederName, location, intervalSeconds, user, controllerId, disco, latitude, longitude,
-      station, motherFeeder, category, state, voltageClass, nominalVoltage, tariffBand } = this.state;
+      station, motherFeeder, category, state, voltageClass, nominalVoltage, tariffBand,
+      feederType, regulator } = this.state;
     this.setState({ busy: true, error: null, result: null });
     api.onboardMeter({
       meterId: meterId.trim(),
@@ -40,6 +75,8 @@ class OnboardMeter extends React.Component {
       voltageClass: voltageClass.trim() || null,
       nominalVoltage: nominalVoltage.trim() || null,
       tariffBand: tariffBand.trim() || null,
+      feederType: feederType.trim() || null,
+      regulator: regulator.trim() || null,
     })
       .then((result) => {
         this.setState({ busy: false, result });
@@ -80,6 +117,12 @@ class OnboardMeter extends React.Component {
                 {NIGERIAN_DISCOS.map((d) => <option key={d} value={d} />)}
               </datalist>
             </label>
+            <label>Feeder Registry
+              <button type="button" className="btn secondary" onClick={this.handleLookup} disabled={s.lookupBusy}>
+                {s.lookupBusy ? 'Looking up…' : 'Autofill from Registry'}
+              </button>
+            </label>
+            {s.lookupMsg && <p className="muted" style={{ flex: '1 1 100%', margin: 0 }}>{s.lookupMsg}</p>}
             <label>Location
               <input name="location" value={s.location} onChange={this.handleChange} />
             </label>
@@ -134,6 +177,22 @@ class OnboardMeter extends React.Component {
                 <option value="D">Band D</option>
                 <option value="E">Band E</option>
               </select>
+            </label>
+            <label>Feeder Type (NERC availability methodology)
+              <select name="feederType" value={s.feederType} onChange={this.handleChange}>
+                <option value="">— select —</option>
+                <option value="Public">Public (load)</option>
+                <option value="Commercial">Commercial (load)</option>
+                <option value="Dedicated">Dedicated (voltage)</option>
+                <option value="Virtual">Virtual (voltage)</option>
+                <option value="Express">Express (voltage)</option>
+                <option value="Public/Commercial">Public/Commercial (load)</option>
+                <option value="Dedicated/Commercial">Dedicated/Commercial (load)</option>
+              </select>
+            </label>
+            <label>Regulator
+              <input name="regulator" value={s.regulator} onChange={this.handleChange}
+                placeholder="e.g. NERC, LASERC" />
             </label>
             <label>Controller ID (optional)
               <input name="controllerId" value={s.controllerId} onChange={this.handleChange}

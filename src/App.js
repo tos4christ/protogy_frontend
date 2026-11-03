@@ -14,6 +14,7 @@ import SbtScorecard from './components/SbtScorecard';
 import LeagueTable from './components/LeagueTable';
 import Settings from './components/Settings';
 import AdminPanel from './components/AdminPanel';
+import NercUserPanel from './components/NercUserPanel';
 import AuditLog from './components/AuditLog';
 import Login from './components/Login';
 import Clock from './components/Clock';
@@ -49,6 +50,12 @@ const NAV = [
   // doesn't get it at all. `excludeAccountTypes` is a 5th, optional NAV
   // entry checked alongside the existing 4th ('admin'-role) entry below.
   ['nerc', 'NERC View', '◈', undefined, ['disco']],
+  // NERC Users is the mirror image of the NERC View exclusion above: a 6th,
+  // optional NAV entry (requireAccountTypes) that shows a tab ONLY for the
+  // listed accountType(s), instead of hiding it for them. Only a nerc_admin
+  // session ever sees this - a plain nerc/state_nerc/disco/protogy session
+  // does not, same as today.
+  ['nerc-users', 'NERC Users', '👥', undefined, undefined, ['nerc_admin']],
   ['sbt', 'SBT Scorecard', '⚡'],
   ['league', 'DisCo League Table', '🏆'],
   ['map', 'Eagle Eye', '◎', 'admin'],
@@ -89,9 +96,10 @@ function buildHash(tab, drillDown) {
 function isValidTab(tab, session) {
   const item = NAV.find(([k]) => k === tab);
   if (!item) return false;
-  const [, , , role, excludeAccountTypes] = item;
+  const [, , , role, excludeAccountTypes, requireAccountTypes] = item;
   if (role && !(session && session.role === role)) return false;
   if (excludeAccountTypes && session && excludeAccountTypes.includes(session.accountType)) return false;
+  if (requireAccountTypes && !(session && requireAccountTypes.includes(session.accountType))) return false;
   return true;
 }
 
@@ -210,9 +218,10 @@ class App extends React.Component {
     const { session, tab, meters, error } = this.state;
     if (!session) return <Login onLogin={this.handleLogin} />;
 
-    const items = NAV.filter(([, , , role, excludeAccountTypes]) => {
+    const items = NAV.filter(([, , , role, excludeAccountTypes, requireAccountTypes]) => {
       if (role && session.role !== 'admin') return false;
       if (excludeAccountTypes && excludeAccountTypes.includes(session.accountType)) return false;
+      if (requireAccountTypes && !requireAccountTypes.includes(session.accountType)) return false;
       return true;
     });
 
@@ -278,6 +287,7 @@ class App extends React.Component {
             {tab === 'onboard' && session.role === 'admin' &&
               <OnboardMeter onOnboarded={this.loadMeters} />}
             {tab === 'admin' && session.role === 'admin' && <AdminPanel />}
+            {tab === 'nerc-users' && session.accountType === 'nerc_admin' && <NercUserPanel />}
             {tab === 'audit' && session.role === 'admin' && <AuditLog />}
             {tab === 'settings' && session.role === 'admin' && <Settings />}
           </main>

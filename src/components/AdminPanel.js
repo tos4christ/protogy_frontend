@@ -10,6 +10,8 @@ const ACCOUNT_TYPES = [
     help: 'Full view/report/download access to every DisCo and state. No user management.' },
   { value: 'nerc', label: 'NERC (National)',
     help: 'Full view/report/download access to every DisCo and state (national regulator). No user management.' },
+  { value: 'nerc_admin', label: 'NERC Admin',
+    help: 'Same national view as NERC, plus the ability to create, modify, deactivate and delete NERC\'s own staff ("nerc") accounts from its own NERC Users tab. Cannot create any other account type, including another NERC Admin.' },
   { value: 'state_nerc', label: 'State NERC',
     help: 'View/report/download access limited to the feeders physically located in the selected state(s) - across whichever DisCo serves them. Pick one state, or several for a regional office covering 2-3 states.' },
   { value: 'disco', label: 'DisCo', help: 'View/report/download access limited to this DisCo\'s own feeders only, plus self-service password change.' },
@@ -297,7 +299,7 @@ class AdminPanel extends React.Component {
                   <td style={{ textAlign: 'left' }}>{u.username}</td>
                   <td style={{ textAlign: 'left' }}>{u.full_name || '—'}</td>
                   <td>
-                    <span className={'badge ' + (u.account_type === 'protogy_admin' ? 'online' : 'never_reported')}>
+                    <span className={'badge ' + (['protogy_admin', 'nerc_admin'].includes(u.account_type) ? 'online' : 'never_reported')}>
                       {ACCOUNT_TYPES.find((t) => t.value === u.account_type)?.label || u.account_type || u.role}
                     </span>
                   </td>

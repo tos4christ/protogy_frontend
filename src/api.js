@@ -178,6 +178,29 @@ const api = {
     body: JSON.stringify({ password }),
   }),
   deleteUser: (username) => j(`/auth/users/${encodeURIComponent(username)}`, { method: 'DELETE' }),
+
+  // Org-admin scoped user management (today: NERC Admin managing its own
+  // 'nerc' staff accounts). Same shapes as the calls above, minus
+  // accountType/disco/states - there's nothing to choose, the server
+  // forces the caller's managed type.
+  listOrgUsers: () => j('/auth/org-users'),
+  // body: { username, password, fullName? }
+  createOrgUser: (body) => j('/auth/org-users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }),
+  setOrgUserStatus: (username, active) => j(`/auth/org-users/${encodeURIComponent(username)}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  }),
+  resetOrgUserPassword: (username, password) => j(`/auth/org-users/${encodeURIComponent(username)}/password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  }),
+  deleteOrgUser: (username) => j(`/auth/org-users/${encodeURIComponent(username)}`, { method: 'DELETE' }),
   auditLog: (filters) => {
     const { username, action, from, to, limit } = filters || {};
     const qs = [];
